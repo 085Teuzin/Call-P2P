@@ -8,7 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --orange: #f97316; --dark: #09090b; }
+        :root { --orange: #f97316; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
             background-color: #000; 
             color: #fff; 
@@ -16,83 +17,130 @@
             height: 100dvh; 
             margin: 0; 
             display: flex; 
-            justify-content: center; 
-            overflow: hidden; 
+            align-items: center; 
+            justify-content: center;
         }
         #app-container { 
             width: 100%; 
-            max-width: 450px; 
-            background-color: var(--dark); 
-            height: 100dvh; 
+            max-width: 500px; 
+            height: 100%; 
+            max-height: 900px;
+            background-color: #09090b; 
             display: flex; 
             flex-direction: column; 
             position: relative;
+            overflow: hidden;
         }
-        .btn-active { background-color: var(--orange) !important; color: white !important; }
+        .theme-bg { background-color: var(--orange) !important; }
+        .theme-text { color: var(--orange) !important; }
+        .theme-border { border-color: var(--orange) !important; }
+        
+        .btn-active { background-color: var(--orange) !important; color: white !important; transform: scale(1.05); }
         .btn-inactive { background-color: #27272a !important; color: #71717a !important; }
         
-        .pulse-animation { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        .pulse-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--orange);
+            animation: pulse-ring 2s infinite;
+        }
         @keyframes pulse-ring {
-            0% { transform: scale(.33); }
-            80%, 100% { opacity: 0; }
+            0% { transform: scale(0.5); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
         }
 
-        .wave-container { display: flex; align-items: center; justify-content: center; gap: 3px; height: 30px; }
-        .wave-bar { width: 3px; height: 5px; background: var(--orange); border-radius: 10px; transition: height 0.1s; }
+        .wave-container { display: flex; align-items: center; gap: 4px; height: 40px; }
+        .wave-bar { width: 4px; height: 8px; background: var(--orange); border-radius: 10px; transition: height 0.1s; }
+        
+        .modal { display: none; z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
+        .modal.active { display: flex; }
     </style>
 </head>
 <body>
 
-<div id="app-container">
-    <div id="lobby" class="flex-1 flex flex-col justify-center p-8 text-center">
-        <h1 class="text-4xl font-black text-orange-500 mb-2">Call P2P</h1>
-        <h2 class="text-zinc-500 text-sm mb-10 font-medium">Conecte-se instantaneamente</h2>
+<div id="app-container" class="md:rounded-[3rem] md:shadow-2xl md:border md:border-zinc-800">
+    <div id="lobby" class="flex-1 flex flex-col justify-between p-8 text-center transition-all">
+        <div class="mt-10">
+            <h1 class="text-5xl font-black theme-text mb-2 tracking-tighter">Call P2P</h1>
+            <p class="text-zinc-500 font-medium text-sm">Qualidade Máxima • Latência Zero</p>
+        </div>
         
-        <div class="space-y-4">
-            <input type="text" id="userName" placeholder="Seu Nome" class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none focus:border-orange-500 transition-all">
-            <input type="text" id="roomName" placeholder="Nome da Sala" class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none focus:border-orange-500 transition-all uppercase font-bold tracking-widest">
+        <div class="space-y-4 w-full">
+            <input type="text" id="userName" placeholder="Seu Nome" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 outline-none focus:theme-border transition-all">
+            <input type="text" id="roomName" placeholder="Nome da Sala" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 outline-none focus:theme-border transition-all uppercase font-bold tracking-widest text-center">
             
-            <div class="flex gap-3 pt-4">
-                <button onclick="initCall(true)" class="flex-1 bg-orange-500 p-4 rounded-2xl font-bold active:scale-95 transition-transform">Ligar</button>
-                <button onclick="initCall(false)" class="flex-1 border border-orange-500 text-orange-500 p-4 rounded-2xl font-bold active:scale-95 transition-transform">Entrar</button>
+            <div class="flex gap-4 pt-4">
+                <button onclick="initCall(true)" class="flex-1 theme-bg p-5 rounded-3xl font-bold active:scale-95 transition-all shadow-lg shadow-orange-500/20">Ligar</button>
+                <button onclick="initCall(false)" class="flex-1 border-2 theme-border theme-text p-5 rounded-3xl font-bold active:scale-95 transition-all">Entrar</button>
             </div>
         </div>
 
-        <footer class="text-center mt-12 text-gray-500 text-xs">
-            Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="text-blue-400 hover:text-blue-300 font-semibold transition duration-200">@085_Teuzinnn</a>
-        </footer>
+        <div class="flex flex-col items-center gap-6">
+            <button onclick="toggleModal()" class="text-zinc-600 text-3xl hover:text-white transition-colors">⚙️</button>
+            <footer class="text-gray-600 text-[10px] uppercase tracking-widest font-bold">
+                Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="text-blue-500">@085_Teuzinnn</a>
+            </footer>
+        </div>
     </div>
 
-    <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-6">
-        <div class="text-center">
-            <p id="status-text" class="text-orange-500 text-xs font-bold tracking-widest uppercase mb-2">Aguardando...</p>
-            <h3 id="remote-display-name" class="text-2xl font-black">---</h3>
-            <div id="timer" class="text-zinc-500 font-mono text-sm mt-1">00:00</div>
+    <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-6 bg-[#050505]">
+        <div class="text-center w-full px-4">
+            <div id="status-chip" class="inline-block px-4 py-1 rounded-full bg-zinc-900 border border-zinc-800 mb-4">
+                <p id="status-text" class="theme-text text-[10px] font-black tracking-widest uppercase">Aguardando Conexão...</p>
+            </div>
+            <h3 id="remote-display-name" class="text-3xl font-black truncate">---</h3>
+            <div id="timer" class="text-zinc-500 font-mono text-lg mt-2 opacity-50">00:00</div>
         </div>
 
-        <div class="relative flex items-center justify-center">
-            <div id="pulse" class="absolute w-40 h-40 rounded-full border-2 border-orange-500/30 hidden pulse-animation"></div>
-            <div class="w-32 h-32 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center overflow-hidden">
-                <i class="fas fa-user text-5xl text-zinc-700"></i>
+        <div class="relative flex items-center justify-center w-64 h-64">
+            <div id="pulse-box" class="hidden">
+                <div class="pulse-animation"></div>
+                <div class="pulse-animation" style="animation-delay: 0.5s"></div>
+            </div>
+            <div class="w-40 h-40 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center z-10 shadow-2xl">
+                <i id="main-avatar-icon" class="fas fa-user text-6xl text-zinc-700 transition-colors"></i>
             </div>
         </div>
 
         <div class="wave-container" id="visualizer">
-            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
         </div>
 
-        <div class="grid grid-cols-3 gap-6 w-full max-w-xs">
-            <button onclick="toggleMic()" id="btn-mic" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all shadow-lg">
+        <div class="flex items-center justify-center gap-8 w-full pb-10">
+            <button onclick="toggleMic()" id="btn-mic" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all">
                 <i id="icon-mic" class="fas fa-microphone"></i>
             </button>
             
-            <button onclick="endCall()" class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-xl active:scale-90 transition-all shadow-xl shadow-red-900/40">
+            <button onclick="endCall()" class="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-3xl active:scale-90 transition-all shadow-2xl shadow-red-900/40">
                 <i class="fas fa-phone-slash"></i>
             </button>
 
-            <button onclick="toggleAudio()" id="btn-audio" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all shadow-lg">
+            <button onclick="toggleAudio()" id="btn-audio" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all">
                 <i id="icon-audio" class="fas fa-volume-up"></i>
             </button>
+        </div>
+    </div>
+
+    <div id="config-modal" class="modal absolute inset-0 flex flex-col items-center justify-center p-8">
+        <div class="bg-zinc-900 w-full rounded-[2.5rem] p-8 border border-zinc-800 shadow-2xl">
+            <h4 class="text-center font-bold mb-6 text-zinc-400 uppercase tracking-widest text-xs">Ajustes do Sistema</h4>
+            
+            <p class="text-sm mb-4 font-bold">Cores do Tema</p>
+            <div class="grid grid-cols-4 gap-4 mb-10">
+                <button onclick="setTheme('#f97316')" class="w-full aspect-square bg-orange-500 rounded-2xl"></button>
+                <button onclick="setTheme('#22c55e')" class="w-full aspect-square bg-green-500 rounded-2xl"></button>
+                <button onclick="setTheme('#ec4899')" class="w-full aspect-square bg-pink-500 rounded-2xl"></button>
+                <button onclick="setTheme('#a855f7')" class="w-full aspect-square bg-purple-500 rounded-2xl"></button>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="clearAllData()" class="w-full p-4 bg-red-600/10 text-red-500 rounded-2xl font-bold border border-red-600/20 active:scale-95 transition-all">Limpar Dados</button>
+                <button onclick="toggleModal()" class="w-full p-4 bg-zinc-800 rounded-2xl font-bold active:scale-95 transition-all">Fechar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -101,38 +149,39 @@
 
 <script>
     let peer, conn, currentCall, localStream;
-    let micEnabled = true;
-    let audioEnabled = true;
-    let timerInterval;
+    let micEnabled = true, audioEnabled = true, timerInterval;
 
-    const remoteAudio = document.getElementById('remoteAudio');
+    // LocalStorage
+    window.onload = () => {
+        document.getElementById('userName').value = localStorage.getItem('p2p_name') || '';
+        document.getElementById('roomName').value = localStorage.getItem('p2p_room') || '';
+        const savedTheme = localStorage.getItem('p2p_theme') || '#f97316';
+        setTheme(savedTheme);
+    };
 
     async function initCall(isHost) {
         const myName = document.getElementById('userName').value.trim();
         const room = document.getElementById('roomName').value.trim();
 
-        if (!myName || !room) return alert("Preencha seu nome e a sala!");
+        if (!myName || !room) return alert("Preencha os campos corretamente!");
 
-        const cleanRoomId = "P2P_CALL_" + room.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        // Inicializa Peer
+        localStorage.setItem('p2p_name', myName);
+        localStorage.setItem('p2p_room', room);
+
+        const cleanRoomId = "P2P_CALL_REAL_" + room.toLowerCase().replace(/[^a-z0-9]/g, '');
         peer = isHost ? new Peer(cleanRoomId) : new Peer();
 
-        peer.on('open', async (id) => {
+        peer.on('open', async () => {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('call-screen').style.display = 'flex';
             
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
                 if (!isHost) {
                     const call = peer.call(cleanRoomId, localStream, { metadata: { name: myName } });
                     handleCall(call);
                 }
-            } catch (err) {
-                alert("Erro ao acessar microfone!");
-                location.reload();
-            }
+            } catch (err) { alert("Acesso ao microfone negado!"); location.reload(); }
         });
 
         peer.on('call', (call) => {
@@ -141,74 +190,84 @@
         });
 
         peer.on('error', (err) => {
-            if (err.type === 'unavailable-id') alert("Sala já ocupada! Tente outro nome.");
-            else alert("Erro na conexão P2P.");
+            if(err.type === 'unavailable-id') alert("Esta sala já tem um Host ativo!");
             location.reload();
         });
     }
 
     function handleCall(call) {
         currentCall = call;
-        document.getElementById('status-text').innerText = "Conectado";
-        document.getElementById('pulse').classList.remove('hidden');
-        startTimer();
+        
+        // Monitorar desconexão em tempo real
+        const checkConn = setInterval(() => {
+            if (call && !call.open) {
+                clearInterval(checkConn);
+                endCall();
+            }
+        }, 1000);
 
         call.on('stream', (stream) => {
-            remoteAudio.srcObject = stream;
-            document.getElementById('remote-display-name').innerText = call.metadata?.name || "Convidado";
+            document.getElementById('remoteAudio').srcObject = stream;
+            document.getElementById('status-text').innerText = "Ligação Ativa";
+            document.getElementById('remote-display-name').innerText = call.metadata?.name || "Conectado";
+            document.getElementById('pulse-box').classList.remove('hidden');
+            document.getElementById('main-avatar-icon').classList.add('theme-text');
+            startTimer();
             animateWaves();
         });
 
-        call.on('close', () => endCall());
+        call.on('close', endCall);
     }
 
-    // FUNÇÕES DE CONTROLE (ON/OFF)
+    function startTimer() {
+        if(timerInterval) return;
+        let sec = 0;
+        timerInterval = setInterval(() => {
+            sec++;
+            let m = Math.floor(sec / 60), s = sec % 60;
+            document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }, 1000);
+    }
+
     function toggleMic() {
         micEnabled = !micEnabled;
         localStream.getAudioTracks()[0].enabled = micEnabled;
-        
-        const btn = document.getElementById('btn-mic');
-        const icon = document.getElementById('icon-mic');
-        
-        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all shadow-lg ${micEnabled ? 'btn-active' : 'btn-inactive'}`;
+        const btn = document.getElementById('btn-mic'), icon = document.getElementById('icon-mic');
+        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all ${micEnabled ? 'btn-active' : 'btn-inactive'}`;
         icon.className = micEnabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
     }
 
     function toggleAudio() {
         audioEnabled = !audioEnabled;
-        remoteAudio.muted = !audioEnabled;
-        
-        const btn = document.getElementById('btn-audio');
-        const icon = document.getElementById('icon-audio');
-        
-        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all shadow-lg ${audioEnabled ? 'btn-active' : 'btn-inactive'}`;
+        document.getElementById('remoteAudio').muted = !audioEnabled;
+        const btn = document.getElementById('btn-audio'), icon = document.getElementById('icon-audio');
+        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all ${audioEnabled ? 'btn-active' : 'btn-inactive'}`;
         icon.className = audioEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
     }
 
     function endCall() {
-        if (currentCall) currentCall.close();
-        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        if(currentCall) currentCall.close();
         location.reload();
     }
 
-    // UTILITÁRIOS
-    function startTimer() {
-        let sec = 0;
-        timerInterval = setInterval(() => {
-            sec++;
-            let m = Math.floor(sec / 60);
-            let s = sec % 60;
-            document.getElementById('timer').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
-        }, 1000);
+    function toggleModal() { document.getElementById('config-modal').classList.toggle('active'); }
+
+    function setTheme(color) {
+        document.documentElement.style.setProperty('--orange', color);
+        localStorage.setItem('p2p_theme', color);
+    }
+
+    function clearAllData() {
+        if(confirm("Deseja apagar todos os nomes salvos?")) {
+            localStorage.clear();
+            location.reload();
+        }
     }
 
     function animateWaves() {
         const bars = document.querySelectorAll('.wave-bar');
         setInterval(() => {
-            bars.forEach(bar => {
-                const h = Math.random() * 25 + 5;
-                bar.style.height = h + 'px';
-            });
+            bars.forEach(bar => { bar.style.height = (Math.random() * 30 + 5) + 'px'; });
         }, 100);
     }
 </script>
