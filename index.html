@@ -8,12 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --orange: #f97316; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --main-color: #f97316; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { 
             background-color: #000; 
             color: #fff; 
-            font-family: system-ui, -apple-system, sans-serif; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
             height: 100dvh; 
             margin: 0; 
             display: flex; 
@@ -22,124 +22,120 @@
         }
         #app-container { 
             width: 100%; 
-            max-width: 500px; 
+            max-width: 450px; 
             height: 100%; 
-            max-height: 900px;
+            max-height: 850px;
             background-color: #09090b; 
             display: flex; 
             flex-direction: column; 
             position: relative;
             overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
         }
-        .theme-bg { background-color: var(--orange) !important; }
-        .theme-text { color: var(--orange) !important; }
-        .theme-border { border-color: var(--orange) !important; }
-        
-        .btn-active { background-color: var(--orange) !important; color: white !important; transform: scale(1.05); }
-        .btn-inactive { background-color: #27272a !important; color: #71717a !important; }
-        
-        .pulse-animation {
+        @media (min-width: 768px) {
+            #app-container { border-radius: 40px; border: 1px solid #18181b; height: 90vh; }
+        }
+        .theme-bg { background-color: var(--main-color) !important; }
+        .theme-text { color: var(--main-color) !important; }
+        .theme-border { border-color: var(--main-color) !important; }
+        .btn-control { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-on { background-color: var(--main-color); color: #fff; }
+        .btn-off { background-color: #27272a; color: #71717a; }
+        .pulse-ring {
             position: absolute;
-            width: 100%;
-            height: 100%;
+            width: 160px; height: 160px;
             border-radius: 50%;
-            border: 2px solid var(--orange);
-            animation: pulse-ring 2s infinite;
+            border: 2px solid var(--main-color);
+            animation: ring-anim 2s infinite;
+            opacity: 0;
         }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.5); opacity: 0.8; }
-            100% { transform: scale(1.5); opacity: 0; }
+        @keyframes ring-anim {
+            0% { transform: scale(0.6); opacity: 0.8; }
+            100% { transform: scale(1.6); opacity: 0; }
         }
-
-        .wave-container { display: flex; align-items: center; gap: 4px; height: 40px; }
-        .wave-bar { width: 4px; height: 8px; background: var(--orange); border-radius: 10px; transition: height 0.1s; }
-        
-        .modal { display: none; z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
-        .modal.active { display: flex; }
+        .wave-bar { width: 4px; height: 10px; background: var(--main-color); border-radius: 10px; transition: height 0.15s; }
+        #config-modal { background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; }
+        #config-modal.active { display: flex; }
     </style>
 </head>
 <body>
 
-<div id="app-container" class="md:rounded-[3rem] md:shadow-2xl md:border md:border-zinc-800">
-    <div id="lobby" class="flex-1 flex flex-col justify-between p-8 text-center transition-all">
-        <div class="mt-10">
-            <h1 class="text-5xl font-black theme-text mb-2 tracking-tighter">Call P2P</h1>
-            <p class="text-zinc-500 font-medium text-sm">Qualidade Máxima • Latência Zero</p>
+<div id="app-container">
+    <button onclick="toggleModal()" class="absolute top-6 right-6 z-50 text-zinc-500 hover:text-white transition-all text-2xl">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <div id="lobby" class="flex-1 flex flex-col justify-between p-8 pt-20 transition-all">
+        <div class="text-center">
+            <h1 class="text-5xl font-black theme-text tracking-tighter mb-2">Call P2P</h1>
+            <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em]">Audio High Fidelity</p>
         </div>
         
-        <div class="space-y-4 w-full">
-            <input type="text" id="userName" placeholder="Seu Nome" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 outline-none focus:theme-border transition-all">
-            <input type="text" id="roomName" placeholder="Nome da Sala" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 outline-none focus:theme-border transition-all uppercase font-bold tracking-widest text-center">
+        <div class="space-y-4">
+            <input type="text" id="userName" placeholder="Seu apelido" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 focus:theme-border transition-all text-center font-medium">
+            <input type="text" id="roomName" placeholder="NOME DA SALA" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 focus:theme-border transition-all text-center font-bold tracking-widest uppercase theme-text">
             
-            <div class="flex gap-4 pt-4">
-                <button onclick="initCall(true)" class="flex-1 theme-bg p-5 rounded-3xl font-bold active:scale-95 transition-all shadow-lg shadow-orange-500/20">Ligar</button>
-                <button onclick="initCall(false)" class="flex-1 border-2 theme-border theme-text p-5 rounded-3xl font-bold active:scale-95 transition-all">Entrar</button>
+            <div class="grid grid-cols-2 gap-4 pt-4">
+                <button onclick="initCall(true)" class="theme-bg p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Ligar</button>
+                <button onclick="initCall(false)" class="border-2 theme-border theme-text p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Entrar</button>
             </div>
         </div>
 
-        <div class="flex flex-col items-center gap-6">
-            <button onclick="toggleModal()" class="text-zinc-600 text-3xl hover:text-white transition-colors">⚙️</button>
-            <footer class="text-gray-600 text-[10px] uppercase tracking-widest font-bold">
-                Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="text-blue-500">@085_Teuzinnn</a>
-            </footer>
-        </div>
+        <footer class="text-center pb-4">
+            <p class="text-[10px] text-zinc-700 font-bold uppercase tracking-widest">
+                Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="theme-text">@085_Teuzinnn</a>
+            </p>
+        </footer>
     </div>
 
-    <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-6 bg-[#050505]">
-        <div class="text-center w-full px-4">
-            <div id="status-chip" class="inline-block px-4 py-1 rounded-full bg-zinc-900 border border-zinc-800 mb-4">
-                <p id="status-text" class="theme-text text-[10px] font-black tracking-widest uppercase">Aguardando Conexão...</p>
-            </div>
-            <h3 id="remote-display-name" class="text-3xl font-black truncate">---</h3>
-            <div id="timer" class="text-zinc-500 font-mono text-lg mt-2 opacity-50">00:00</div>
+    <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-8 relative">
+        <div class="text-center space-y-2">
+            <div class="inline-block px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[10px] font-black theme-text uppercase tracking-widest" id="status-label">Aguardando...</div>
+            <h3 id="display-remote-name" class="text-3xl font-black tracking-tight">---</h3>
+            <p id="call-timer" class="font-mono text-zinc-500 text-sm">00:00</p>
         </div>
 
-        <div class="relative flex items-center justify-center w-64 h-64">
-            <div id="pulse-box" class="hidden">
-                <div class="pulse-animation"></div>
-                <div class="pulse-animation" style="animation-delay: 0.5s"></div>
+        <div class="relative flex items-center justify-center w-full">
+            <div id="call-visuals" class="hidden">
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring" style="animation-delay: 0.5s"></div>
             </div>
-            <div class="w-40 h-40 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center z-10 shadow-2xl">
-                <i id="main-avatar-icon" class="fas fa-user text-6xl text-zinc-700 transition-colors"></i>
+            <div class="w-36 h-36 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center z-10 shadow-2xl overflow-hidden">
+                <i class="fas fa-user-astronaut text-5xl text-zinc-800" id="avatar-icon"></i>
             </div>
         </div>
 
-        <div class="wave-container" id="visualizer">
-            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="flex items-center gap-1 h-10" id="wave-visualizer">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
         </div>
 
-        <div class="flex items-center justify-center gap-8 w-full pb-10">
-            <button onclick="toggleMic()" id="btn-mic" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all">
-                <i id="icon-mic" class="fas fa-microphone"></i>
+        <div class="flex items-center justify-center gap-6 w-full mb-6">
+            <button onclick="toggleMic()" id="m-btn" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control btn-on">
+                <i id="m-icon" class="fas fa-microphone"></i>
             </button>
-            
-            <button onclick="endCall()" class="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-3xl active:scale-90 transition-all shadow-2xl shadow-red-900/40">
+            <button onclick="endCall()" class="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-3xl active:scale-90 transition-all shadow-2xl shadow-red-900/30">
                 <i class="fas fa-phone-slash"></i>
             </button>
-
-            <button onclick="toggleAudio()" id="btn-audio" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all">
-                <i id="icon-audio" class="fas fa-volume-up"></i>
+            <button onclick="toggleSpeaker()" id="s-btn" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control btn-on">
+                <i id="s-icon" class="fas fa-volume-up"></i>
             </button>
         </div>
     </div>
 
-    <div id="config-modal" class="modal absolute inset-0 flex flex-col items-center justify-center p-8">
-        <div class="bg-zinc-900 w-full rounded-[2.5rem] p-8 border border-zinc-800 shadow-2xl">
-            <h4 class="text-center font-bold mb-6 text-zinc-400 uppercase tracking-widest text-xs">Ajustes do Sistema</h4>
+    <div id="config-modal" class="modal absolute inset-0 flex items-center justify-center p-6 z-[60]">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-[300px] rounded-[32px] p-6 shadow-2xl scale-in">
+            <h4 class="text-center text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-6">Configurações</h4>
             
-            <p class="text-sm mb-4 font-bold">Cores do Tema</p>
-            <div class="grid grid-cols-4 gap-4 mb-10">
-                <button onclick="setTheme('#f97316')" class="w-full aspect-square bg-orange-500 rounded-2xl"></button>
-                <button onclick="setTheme('#22c55e')" class="w-full aspect-square bg-green-500 rounded-2xl"></button>
-                <button onclick="setTheme('#ec4899')" class="w-full aspect-square bg-pink-500 rounded-2xl"></button>
-                <button onclick="setTheme('#a855f7')" class="w-full aspect-square bg-purple-500 rounded-2xl"></button>
+            <div class="grid grid-cols-4 gap-3 mb-8">
+                <button onclick="updateTheme('#f97316')" class="w-full aspect-square bg-orange-500 rounded-xl active:scale-90 transition"></button>
+                <button onclick="updateTheme('#22c55e')" class="w-full aspect-square bg-green-500 rounded-xl active:scale-90 transition"></button>
+                <button onclick="updateTheme('#ec4899')" class="w-full aspect-square bg-pink-500 rounded-xl active:scale-90 transition"></button>
+                <button onclick="updateTheme('#a855f7')" class="w-full aspect-square bg-purple-500 rounded-xl active:scale-90 transition"></button>
             </div>
 
             <div class="space-y-3">
-                <button onclick="clearAllData()" class="w-full p-4 bg-red-600/10 text-red-500 rounded-2xl font-bold border border-red-600/20 active:scale-95 transition-all">Limpar Dados</button>
-                <button onclick="toggleModal()" class="w-full p-4 bg-zinc-800 rounded-2xl font-bold active:scale-95 transition-all">Fechar</button>
+                <button onclick="clearStorage()" class="w-full py-4 text-xs font-bold text-red-500 bg-red-500/5 rounded-2xl border border-red-500/10 hover:bg-red-500/10 transition">LIMPAR DADOS</button>
+                <button onclick="toggleModal()" class="w-full py-4 text-xs font-bold bg-zinc-800 rounded-2xl hover:bg-zinc-700 transition">VOLTAR</button>
             </div>
         </div>
     </div>
@@ -148,127 +144,95 @@
 <audio id="remoteAudio" autoplay></audio>
 
 <script>
-    let peer, conn, currentCall, localStream;
-    let micEnabled = true, audioEnabled = true, timerInterval;
+    let peer, localStream, currentCall, timerInterval;
+    let micOn = true, speakerOn = true;
 
-    // LocalStorage
     window.onload = () => {
         document.getElementById('userName').value = localStorage.getItem('p2p_name') || '';
         document.getElementById('roomName').value = localStorage.getItem('p2p_room') || '';
-        const savedTheme = localStorage.getItem('p2p_theme') || '#f97316';
-        setTheme(savedTheme);
+        updateTheme(localStorage.getItem('p2p_theme') || '#f97316', false);
     };
 
     async function initCall(isHost) {
-        const myName = document.getElementById('userName').value.trim();
-        const room = document.getElementById('roomName').value.trim();
+        const u = document.getElementById('userName').value.trim();
+        const r = document.getElementById('roomName').value.trim();
+        if (!u || !r) return alert("Preencha os campos.");
 
-        if (!myName || !room) return alert("Preencha os campos corretamente!");
+        localStorage.setItem('p2p_name', u);
+        localStorage.setItem('p2p_room', r);
 
-        localStorage.setItem('p2p_name', myName);
-        localStorage.setItem('p2p_room', room);
-
-        const cleanRoomId = "P2P_CALL_REAL_" + room.toLowerCase().replace(/[^a-z0-9]/g, '');
-        peer = isHost ? new Peer(cleanRoomId) : new Peer();
+        const roomId = "REAL_VOICE_" + r.toLowerCase().replace(/[^a-z0-9]/g, '');
+        peer = isHost ? new Peer(roomId) : new Peer();
 
         peer.on('open', async () => {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('call-screen').style.display = 'flex';
-            
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                if (!isHost) {
-                    const call = peer.call(cleanRoomId, localStream, { metadata: { name: myName } });
-                    handleCall(call);
-                }
-            } catch (err) { alert("Acesso ao microfone negado!"); location.reload(); }
+                if (!isHost) handleCall(peer.call(roomId, localStream, { metadata: { name: u } }));
+            } catch (e) { alert("Microfone negado."); location.reload(); }
         });
 
-        peer.on('call', (call) => {
-            call.answer(localStream);
-            handleCall(call);
-        });
-
-        peer.on('error', (err) => {
-            if(err.type === 'unavailable-id') alert("Esta sala já tem um Host ativo!");
-            location.reload();
-        });
+        peer.on('call', c => { c.answer(localStream); handleCall(c); });
+        peer.on('error', e => { if(e.type === 'unavailable-id') alert("Sala ocupada!"); location.reload(); });
     }
 
     function handleCall(call) {
         currentCall = call;
-        
-        // Monitorar desconexão em tempo real
-        const checkConn = setInterval(() => {
-            if (call && !call.open) {
-                clearInterval(checkConn);
-                endCall();
-            }
-        }, 1000);
+        const check = setInterval(() => { if(call && !call.open) { clearInterval(check); endCall(); } }, 1000);
 
-        call.on('stream', (stream) => {
-            document.getElementById('remoteAudio').srcObject = stream;
-            document.getElementById('status-text').innerText = "Ligação Ativa";
-            document.getElementById('remote-display-name').innerText = call.metadata?.name || "Conectado";
-            document.getElementById('pulse-box').classList.remove('hidden');
-            document.getElementById('main-avatar-icon').classList.add('theme-text');
+        call.on('stream', s => {
+            document.getElementById('remoteAudio').srcObject = s;
+            document.getElementById('status-label').innerText = "Conectado";
+            document.getElementById('display-remote-name').innerText = call.metadata?.name || "Parceiro";
+            document.getElementById('call-visuals').classList.remove('hidden');
+            document.getElementById('avatar-icon').classList.add('theme-text');
             startTimer();
             animateWaves();
         });
-
         call.on('close', endCall);
     }
 
     function startTimer() {
         if(timerInterval) return;
-        let sec = 0;
+        let s = 0;
         timerInterval = setInterval(() => {
-            sec++;
-            let m = Math.floor(sec / 60), s = sec % 60;
-            document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            s++;
+            let min = Math.floor(s/60), sec = s%60;
+            document.getElementById('call-timer').innerText = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
         }, 1000);
     }
 
     function toggleMic() {
-        micEnabled = !micEnabled;
-        localStream.getAudioTracks()[0].enabled = micEnabled;
-        const btn = document.getElementById('btn-mic'), icon = document.getElementById('icon-mic');
-        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all ${micEnabled ? 'btn-active' : 'btn-inactive'}`;
-        icon.className = micEnabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+        micOn = !micOn;
+        localStream.getAudioTracks()[0].enabled = micOn;
+        document.getElementById('m-btn').className = `w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control ${micOn?'btn-on':'btn-off'}`;
+        document.getElementById('m-icon').className = micOn ? 'fas fa-microphone' : 'fas fa-microphone-slash';
     }
 
-    function toggleAudio() {
-        audioEnabled = !audioEnabled;
-        document.getElementById('remoteAudio').muted = !audioEnabled;
-        const btn = document.getElementById('btn-audio'), icon = document.getElementById('icon-audio');
-        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all ${audioEnabled ? 'btn-active' : 'btn-inactive'}`;
-        icon.className = audioEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+    function toggleSpeaker() {
+        speakerOn = !speakerOn;
+        document.getElementById('remoteAudio').muted = !speakerOn;
+        document.getElementById('s-btn').className = `w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control ${speakerOn?'btn-on':'btn-off'}`;
+        document.getElementById('s-icon').className = speakerOn ? 'fas fa-volume-up' : 'fas fa-volume-mute';
     }
 
-    function endCall() {
-        if(currentCall) currentCall.close();
-        location.reload();
-    }
-
+    function endCall() { location.reload(); }
     function toggleModal() { document.getElementById('config-modal').classList.toggle('active'); }
-
-    function setTheme(color) {
-        document.documentElement.style.setProperty('--orange', color);
+    
+    function updateTheme(color, close = true) {
+        document.documentElement.style.setProperty('--main-color', color);
         localStorage.setItem('p2p_theme', color);
+        if(close) toggleModal();
     }
 
-    function clearAllData() {
-        if(confirm("Deseja apagar todos os nomes salvos?")) {
-            localStorage.clear();
-            location.reload();
-        }
+    function clearStorage() {
+        if(confirm("Limpar dados salvos?")) { localStorage.clear(); location.reload(); }
     }
 
     function animateWaves() {
-        const bars = document.querySelectorAll('.wave-bar');
-        setInterval(() => {
-            bars.forEach(bar => { bar.style.height = (Math.random() * 30 + 5) + 'px'; });
-        }, 100);
+        const b = document.querySelectorAll('.wave-bar');
+        setInterval(() => b.forEach(i => i.style.height = (Math.random()*30+5)+'px'), 150);
     }
 </script>
 </body>
