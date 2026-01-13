@@ -3,60 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Call P2P - Made By: @085_Teuzinnn</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Call P2P Pro</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --main-color: #f97316; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { 
-            background-color: #000; 
-            color: #fff; 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            height: 100dvh; 
-            margin: 0; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-        }
-        #app-container { 
-            width: 100%; 
-            max-width: 450px; 
-            height: 100%; 
-            max-height: 850px;
-            background-color: #09090b; 
-            display: flex; 
-            flex-direction: column; 
-            position: relative; 
-            overflow: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
-        @media (min-width: 768px) {
-            #app-container { border-radius: 40px; border: 1px solid #18181b; height: 90vh; }
-        }
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; height: 100dvh; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #app-container { width: 100%; max-width: 450px; height: 100%; background-color: #09090b; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        @media (min-width: 768px) { #app-container { border-radius: 40px; border: 1px solid #18181b; height: 90vh; } }
         .theme-bg { background-color: var(--main-color) !important; }
         .theme-text { color: var(--main-color) !important; }
         .theme-border { border-color: var(--main-color) !important; }
         .btn-control { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-on { background-color: var(--main-color); color: #fff; }
         .btn-off { background-color: #27272a; color: #71717a; }
-        .wave-bar { width: 4px; height: 10px; background: var(--main-color); border-radius: 10px; transition: height 0.15s; }
-        #config-modal { background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; }
-        #config-modal.active { display: flex; }
+        .wave-bar { width: 6px; background: var(--main-color); border-radius: 10px; transition: height 0.05s linear; min-height: 4px; }
+        #config-modal, #share-modal { background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); display: none; z-index: 100; position: absolute; inset: 0; align-items: center; justify-content: center; padding: 20px; }
+        #config-modal.active, #share-modal.active { display: flex; }
+        .pulse { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0px rgba(249, 115, 22, 0.4); } 100% { box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); } }
     </style>
 </head>
 <body>
 
 <div id="app-container">
-    <button onclick="toggleModal()" class="absolute top-6 right-6 z-50 text-zinc-500 hover:text-white transition-all text-2xl">
-        <i class="fas fa-cog"></i>
-    </button>
+    <div class="absolute top-6 right-6 z-50 flex gap-4">
+        <button onclick="openShare()" class="text-zinc-500 hover:text-white transition-all text-xl"><i class="fas fa-share-nodes"></i></button>
+        <button onclick="toggleModal('config-modal')" class="text-zinc-500 hover:text-white transition-all text-xl"><i class="fas fa-cog"></i></button>
+    </div>
 
-    <div id="lobby" class="flex-1 flex flex-col justify-between p-8 pt-20 transition-all">
+    <div id="lobby" class="flex-1 flex flex-col justify-between p-8 pt-20">
         <div class="text-center">
             <h1 class="text-5xl font-black theme-text tracking-tighter mb-2">Call P2P</h1>
-            <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em]">Audio High Fidelity</p>
+            <p id="net-status" class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em]">Sistema de Áudio Criptografado</p>
         </div>
         
         <div class="space-y-4">
@@ -64,63 +47,71 @@
             <input type="text" id="roomName" placeholder="NOME DA SALA" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 focus:theme-border transition-all text-center font-bold tracking-widest uppercase theme-text">
             
             <div class="grid grid-cols-2 gap-4 pt-4">
-                <button onclick="initCall(true)" class="theme-bg p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Ligar</button>
+                <button onclick="initCall(true)" class="theme-bg p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Criar Sala</button>
                 <button onclick="initCall(false)" class="border-2 theme-border theme-text p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Entrar</button>
             </div>
         </div>
 
         <footer class="text-center pb-4">
             <p class="text-[10px] text-zinc-700 font-bold uppercase tracking-widest">
-                Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="theme-text">@085_Teuzinnn</a>
+                v2.0 PRO • By: <a href="#" class="theme-text">@085_Teuzinnn</a>
             </p>
         </footer>
     </div>
 
     <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-8 relative">
         <div class="text-center space-y-2">
-            <div class="inline-block px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[10px] font-black theme-text uppercase tracking-widest" id="status-label">Aguardando...</div>
+            <div id="status-label" class="inline-block px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[10px] font-black theme-text uppercase tracking-widest">Conectando...</div>
             <h3 id="display-remote-name" class="text-3xl font-black tracking-tight">---</h3>
-            <p id="call-timer" class="font-mono text-zinc-500 text-sm">00:00</p>
-        </div>
-
-        <div class="relative flex items-center justify-center w-full">
-            <div class="w-36 h-36 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center z-10 shadow-2xl overflow-hidden">
-                <span id="avatar-initial" class="text-6xl font-black text-zinc-700 transition-colors uppercase">?</span>
+            <div class="flex items-center justify-center gap-2">
+                <p id="call-timer" class="font-mono text-zinc-500 text-sm">00:00</p>
+                <span id="ping-disp" class="text-[10px] text-zinc-600 font-bold"></span>
             </div>
         </div>
 
-        <div class="flex items-center gap-1 h-10" id="wave-visualizer">
-            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="relative flex items-center justify-center w-full">
+            <div id="avatar-container" class="w-40 h-40 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center z-10 shadow-2xl transition-all">
+                <span id="avatar-initial" class="text-7xl font-black text-zinc-700 uppercase">?</span>
+            </div>
         </div>
 
-        <div class="flex items-center justify-center gap-6 w-full mb-6">
-            <button onclick="toggleMic()" id="m-btn" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control btn-on">
+        <div class="flex items-end justify-center gap-1.5 h-16 w-full" id="wave-container">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+
+        <div class="flex items-center justify-center gap-6 w-full mb-4">
+            <button onclick="toggleMic()" id="m-btn" class="w-14 h-14 rounded-full flex items-center justify-center text-xl btn-control btn-on">
                 <i id="m-icon" class="fas fa-microphone"></i>
             </button>
-            <button onclick="endCall()" class="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-3xl active:scale-90 transition-all shadow-2xl shadow-red-900/30">
+            <button onclick="endCall()" class="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-3xl active:scale-90 transition-all shadow-2xl shadow-red-900/40">
                 <i class="fas fa-phone-slash"></i>
             </button>
-            <button onclick="toggleSpeaker()" id="s-btn" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control btn-on">
+            <button onclick="toggleSpeaker()" id="s-btn" class="w-14 h-14 rounded-full flex items-center justify-center text-xl btn-control btn-on">
                 <i id="s-icon" class="fas fa-volume-up"></i>
             </button>
         </div>
     </div>
 
-    <div id="config-modal" class="modal absolute inset-0 flex items-center justify-center p-6 z-[60]">
-        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-[300px] rounded-[32px] p-6 shadow-2xl scale-in">
-            <h4 class="text-center text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-6">Configurações</h4>
-            
-            <div class="grid grid-cols-4 gap-3 mb-8">
-                <button onclick="updateTheme('#f97316')" class="w-full aspect-square bg-orange-500 rounded-xl active:scale-90 transition"></button>
-                <button onclick="updateTheme('#22c55e')" class="w-full aspect-square bg-green-500 rounded-xl active:scale-90 transition"></button>
-                <button onclick="updateTheme('#ec4899')" class="w-full aspect-square bg-pink-500 rounded-xl active:scale-90 transition"></button>
-                <button onclick="updateTheme('#a855f7')" class="w-full aspect-square bg-purple-500 rounded-xl active:scale-90 transition"></button>
+    <div id="config-modal">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-[320px] rounded-[40px] p-8 shadow-2xl">
+            <h4 class="text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-8">Personalização</h4>
+            <div class="grid grid-cols-4 gap-4 mb-8">
+                <button onclick="updateTheme('#f97316')" class="aspect-square bg-orange-500 rounded-2xl"></button>
+                <button onclick="updateTheme('#22c55e')" class="aspect-square bg-green-500 rounded-2xl"></button>
+                <button onclick="updateTheme('#3b82f6')" class="aspect-square bg-blue-500 rounded-2xl"></button>
+                <button onclick="updateTheme('#a855f7')" class="aspect-square bg-purple-500 rounded-2xl"></button>
             </div>
+            <button onclick="clearStorage()" class="w-full py-4 text-xs font-bold text-red-500 bg-red-500/10 rounded-2xl mb-3">RESETAR TUDO</button>
+            <button onclick="toggleModal('config-modal')" class="w-full py-4 text-xs font-bold bg-zinc-800 rounded-2xl">FECHAR</button>
+        </div>
+    </div>
 
-            <div class="space-y-3">
-                <button onclick="clearStorage()" class="w-full py-4 text-xs font-bold text-red-500 bg-red-500/5 rounded-2xl border border-red-500/10 hover:bg-red-500/10 transition">LIMPAR DADOS</button>
-                <button onclick="toggleModal()" class="w-full py-4 text-xs font-bold bg-zinc-800 rounded-2xl hover:bg-zinc-700 transition">VOLTAR</button>
-            </div>
+    <div id="share-modal">
+        <div class="bg-white p-8 rounded-[40px] flex flex-col items-center max-w-[320px] w-full">
+            <div id="qrcode" class="mb-6"></div>
+            <p class="text-black text-[10px] font-black uppercase mb-4 tracking-widest">Aponte a câmera para convidar</p>
+            <button onclick="copyInvite()" class="w-full py-4 bg-zinc-900 text-white rounded-2xl text-xs font-bold">COPIAR LINK</button>
+            <button onclick="toggleModal('share-modal')" class="mt-4 text-zinc-400 text-[10px] font-bold uppercase">Voltar</button>
         </div>
     </div>
 </div>
@@ -128,82 +119,107 @@
 <audio id="remoteAudio" autoplay></audio>
 
 <script>
-    let peer, localStream, currentCall, timerInterval;
+    let peer, localStream, currentCall, timerInterval, audioCtx, analyser, dataArray;
     let micOn = true, speakerOn = true;
 
     window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomParam = urlParams.get('room');
+        if(roomParam) document.getElementById('roomName').value = roomParam;
+        
         document.getElementById('userName').value = localStorage.getItem('p2p_name') || '';
-        document.getElementById('roomName').value = localStorage.getItem('p2p_room') || '';
+        if(!roomParam) document.getElementById('roomName').value = localStorage.getItem('p2p_room') || '';
         updateTheme(localStorage.getItem('p2p_theme') || '#f97316', false);
     };
 
     async function initCall(isHost) {
         const u = document.getElementById('userName').value.trim();
         const r = document.getElementById('roomName').value.trim();
-        if (!u || !r) return alert("Preencha os campos.");
+        if (!u || !r) return alert("Identifique-se primeiro.");
 
         localStorage.setItem('p2p_name', u);
         localStorage.setItem('p2p_room', r);
 
-        const roomId = "REAL_VOICE_" + r.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const roomId = "P2P_PRO_VOICE_" + r.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
+            });
+            setupVisualizer(localStream);
+        } catch (e) { return alert("Erro: Microfone é obrigatório."); }
+
         peer = isHost ? new Peer(roomId) : new Peer();
 
-        peer.on('open', async () => {
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('call-screen').style.display = 'flex';
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                if (!isHost) {
-                    const call = peer.call(roomId, localStream, { metadata: { name: u } });
-                    handleCall(call);
-                }
-            } catch (e) { alert("Microfone negado."); location.reload(); }
+        peer.on('open', (id) => {
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('call-screen').classList.remove('hidden');
+            if(!isHost) {
+                const call = peer.call(roomId, localStream, { metadata: { name: u } });
+                handleCall(call);
+            }
         });
 
-        peer.on('call', c => { 
-            c.answer(localStream); 
-            handleCall(c); 
+        peer.on('call', c => {
+            c.answer(localStream);
+            handleCall(c);
         });
 
-        peer.on('error', e => { 
-            if(e.type === 'unavailable-id') alert("Sala ocupada!"); 
-            location.reload(); 
+        peer.on('error', e => {
+            alert(e.type === 'unavailable-id' ? "Esta sala já tem um dono online." : "Erro de conexão.");
+            location.reload();
         });
     }
 
     function handleCall(call) {
         currentCall = call;
-        const check = setInterval(() => { if(call && !call.open) { clearInterval(check); endCall(); } }, 1000);
-
-        if (call.peerConnection) {
-            const dataConn = peer.connect(call.peer);
-            dataConn.on('open', () => {
-                dataConn.send({ name: localStorage.getItem('p2p_name') });
-            });
-        }
-
-        peer.on('connection', conn => {
-            conn.on('data', data => {
-                if(data.name) updateRemoteUI(data.name);
-            });
-        });
-
         call.on('stream', s => {
-            document.getElementById('remoteAudio').srcObject = s;
-            document.getElementById('status-label').innerText = "Conectado";
-            if (call.metadata && call.metadata.name) updateRemoteUI(call.metadata.name);
+            const audio = document.getElementById('remoteAudio');
+            audio.srcObject = s;
+            document.getElementById('status-label').innerText = "Em Chamada";
+            document.getElementById('status-label').classList.add('pulse');
+            if (call.metadata?.name) updateRemoteUI(call.metadata.name);
             startTimer();
-            animateWaves();
         });
+
+        const conn = peer.connect(call.peer);
+        conn.on('open', () => {
+            conn.send({ name: localStorage.getItem('p2p_name'), type: 'info' });
+        });
+
+        peer.on('connection', c => {
+            c.on('data', data => {
+                if(data.type === 'info') updateRemoteUI(data.name);
+            });
+        });
+
         call.on('close', endCall);
+    }
+
+    function setupVisualizer(stream) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 32;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        renderFrame();
+    }
+
+    function renderFrame() {
+        requestAnimationFrame(renderFrame);
+        analyser.getByteFrequencyData(dataArray);
+        const bars = document.querySelectorAll('.wave-bar');
+        bars.forEach((bar, i) => {
+            const val = dataArray[i] || 0;
+            bar.style.height = `${(val / 255) * 60 + 4}px`;
+        });
     }
 
     function updateRemoteUI(name) {
         document.getElementById('display-remote-name').innerText = name;
-        const initial = name.charAt(0).toUpperCase();
-        const avatarInitial = document.getElementById('avatar-initial');
-        avatarInitial.innerText = initial;
-        avatarInitial.classList.add('theme-text');
+        document.getElementById('avatar-initial').innerText = name.charAt(0);
+        document.getElementById('avatar-container').classList.add('theme-border');
     }
 
     function startTimer() {
@@ -211,41 +227,56 @@
         let s = 0;
         timerInterval = setInterval(() => {
             s++;
-            let min = Math.floor(s/60), sec = s%60;
-            document.getElementById('call-timer').innerText = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+            let m = Math.floor(s/60), sec = s%60;
+            document.getElementById('call-timer').innerText = `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
         }, 1000);
     }
 
     function toggleMic() {
         micOn = !micOn;
         localStream.getAudioTracks()[0].enabled = micOn;
-        document.getElementById('m-btn').className = `w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control ${micOn?'btn-on':'btn-off'}`;
+        document.getElementById('m-btn').className = `w-14 h-14 rounded-full flex items-center justify-center text-xl btn-control ${micOn?'btn-on':'btn-off'}`;
         document.getElementById('m-icon').className = micOn ? 'fas fa-microphone' : 'fas fa-microphone-slash';
     }
 
     function toggleSpeaker() {
         speakerOn = !speakerOn;
         document.getElementById('remoteAudio').muted = !speakerOn;
-        document.getElementById('s-btn').className = `w-16 h-16 rounded-full flex items-center justify-center text-xl btn-control ${speakerOn?'btn-on':'btn-off'}`;
+        document.getElementById('s-btn').className = `w-14 h-14 rounded-full flex items-center justify-center text-xl btn-control ${speakerOn?'btn-on':'btn-off'}`;
         document.getElementById('s-icon').className = speakerOn ? 'fas fa-volume-up' : 'fas fa-volume-mute';
     }
 
-    function endCall() { location.reload(); }
-    function toggleModal() { document.getElementById('config-modal').classList.toggle('active'); }
-    
+    function endCall() { location.href = window.location.pathname; }
+
+    function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
+
+    function openShare() {
+        const room = document.getElementById('roomName').value;
+        if(!room) return alert("Crie ou entre em uma sala primeiro.");
+        const url = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(room)}`;
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200 });
+        toggleModal('share-modal');
+    }
+
+    function copyInvite() {
+        const room = document.getElementById('roomName').value;
+        const url = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(room)}`;
+        navigator.clipboard.writeText(url);
+        alert("Link copiado!");
+    }
+
     function updateTheme(color, close = true) {
         document.documentElement.style.setProperty('--main-color', color);
         localStorage.setItem('p2p_theme', color);
-        if(close) toggleModal();
+        if(close) toggleModal('config-modal');
     }
 
     function clearStorage() {
-        if(confirm("Limpar dados salvos?")) { localStorage.clear(); location.reload(); }
-    }
-
-    function animateWaves() {
-        const b = document.querySelectorAll('.wave-bar');
-        setInterval(() => b.forEach(i => i.style.height = (Math.random()*30+5)+'px'), 150);
+        if(confirm("Deseja apagar todos os dados e resetar?")) {
+            localStorage.clear();
+            location.reload();
+        }
     }
 </script>
 </body>
