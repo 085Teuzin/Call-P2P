@@ -2,205 +2,211 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Call P2P - Made By: @085_Teuzinnn</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0; overflow: hidden; }
-        .bg-custom { background-color: #f97316; }
-        .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2rem; }
-        .pulse { animation: pulse-bg 2s infinite; }
-        @keyframes pulse-bg { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.6); } 70% { box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
-        #callModal { display: none; position: fixed; inset: 0; z-index: 100; background: #0f172a; flex-direction: column; align-items: center; justify-content: space-around; padding: 2rem; }
-        #video-container { width: 100%; height: 60%; display: none; border-radius: 1.5rem; overflow: hidden; background: #1e293b; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .btn-action { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: 0.2s; }
+        :root { --orange: #f97316; --dark: #09090b; }
+        body { 
+            background-color: #000; 
+            color: #fff; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            height: 100dvh; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
+        #app-container { 
+            width: 100%; 
+            max-width: 450px; 
+            background-color: var(--dark); 
+            height: 100dvh; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+        }
+        .glass { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .pulse-bg {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--orange);
+            filter: blur(80px);
+            opacity: 0.15;
+            border-radius: 50%;
+            animation: pulse 4s infinite;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.15; } 50% { transform: scale(1.3); opacity: 0.25; } }
+        .calling-animation { animation: ripple 1.5s linear infinite; }
+        @keyframes ripple {
+            0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+            100% { box-shadow: 0 0 0 40px rgba(249, 115, 22, 0); }
+        }
+        #settings-modal { display: none; }
+        #settings-modal.active { display: flex; }
     </style>
 </head>
-<body class="p-4">
+<body>
 
-    <div class="absolute top-5 right-5">
-        <button onclick="toggleSettings()" class="text-2xl">⚙️</button>
+<div id="app-container">
+    <div id="lobby" class="flex-1 flex flex-col justify-center p-8 text-center">
+        <div class="mb-8">
+            <h1 class="text-4xl font-black text-orange-500 mb-2">Call P2P</h1>
+            <h2 class="text-zinc-500 text-sm font-medium">Conecte-se pelo nome da sala</h2>
+        </div>
+
+        <div class="space-y-4">
+            <input type="text" id="roomName" placeholder="Nome da Sala" class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none focus:border-orange-500 transition-all text-center font-bold tracking-widest uppercase">
+            
+            <div class="flex gap-3 pt-4">
+                <button onclick="startApp(true)" class="flex-1 bg-orange-500 p-4 rounded-2xl font-bold active:scale-95 transition-transform flex items-center justify-center gap-2">
+                    <i class="fas fa-plus"></i> Criar
+                </button>
+                <button onclick="startApp(false)" class="flex-1 border border-orange-500 text-orange-500 p-4 rounded-2xl font-bold active:scale-95 transition-transform flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+            </div>
+        </div>
+
+        <button onclick="toggleSettings()" class="mt-8 text-zinc-600 text-2xl active:rotate-90 transition-transform duration-300">⚙️</button>
+
+        <footer class="text-center mt-auto pt-10 text-gray-500 text-xs">
+            Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="text-blue-400 hover:text-blue-300 font-semibold transition duration-200">@085_Teuzinnn</a>
+        </footer>
     </div>
 
-    <div class="w-full max-w-sm text-center">
-        <h1 class="text-4xl font-bold mb-2">Call P2P</h1>
-        <h2 class="text-gray-400 text-sm mb-8">Conexão simultânea segura</h2>
+    <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-8 relative overflow-hidden">
+        <div class="pulse-bg"></div>
+        
+        <div class="text-center z-10">
+            <div id="call-status-label" class="text-orange-500 font-bold tracking-[0.2em] text-xs uppercase mb-4">Aguardando Conexão</div>
+            <h3 id="display-room" class="text-2xl font-black uppercase tracking-tighter">SALA</h3>
+        </div>
 
-        <div class="glass p-8 shadow-2xl">
-            <div id="statusIcon" class="w-24 h-24 bg-custom rounded-full mx-auto mb-6 flex items-center justify-center text-3xl">
-                <i class="fas fa-headset"></i>
+        <div class="relative z-10">
+            <div id="avatar-container" class="w-40 h-40 bg-zinc-900 rounded-full flex items-center justify-center border-2 border-zinc-800 relative">
+                <i class="fas fa-microphone text-5xl text-zinc-700" id="mic-icon"></i>
             </div>
+        </div>
 
-            <div class="mb-6">
-                <p class="text-xs text-gray-500 uppercase mb-1">Seu ID de acesso</p>
-                <div onclick="copyId()" class="bg-slate-800 p-3 rounded-xl border border-slate-700 cursor-pointer flex justify-center items-center gap-3">
-                    <span id="my-id" class="font-mono font-bold text-orange-400">Carregando...</span>
-                    <i class="far fa-copy text-gray-500 text-xs"></i>
-                </div>
-            </div>
-
-            <input type="text" id="remote-id" placeholder="ID do outro player" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-center mb-4 focus:outline-none focus:border-orange-500">
-            <button onclick="startCall()" class="w-full bg-custom hover:opacity-90 py-4 rounded-xl font-bold flex items-center justify-center gap-2">
-                <i class="fas fa-play"></i> INICIAR CALL
+        <div class="flex gap-6 z-10">
+            <button id="mute-btn" onclick="toggleMute()" class="w-16 h-16 rounded-full glass flex items-center justify-center text-xl active:scale-90 transition">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button onclick="location.reload()" class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-xl shadow-lg shadow-red-900/40 active:scale-90 transition">
+                <i class="fas fa-phone-slash"></i>
             </button>
         </div>
     </div>
 
-    <div id="callModal">
-        <div id="video-container">
-            <video id="remoteVideo" autoplay playsinline></video>
-        </div>
-        
-        <div class="text-center">
-            <div id="callAvatar" class="w-32 h-32 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl pulse">
-                <i class="fas fa-user text-white"></i>
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-black/90 items-center justify-center p-6">
+        <div class="glass w-full max-w-xs p-8 rounded-3xl text-center">
+            <h3 class="font-bold mb-6">Cor do Tema</h3>
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <button onclick="changeTheme('#f97316')" class="w-full aspect-square bg-orange-500 rounded-xl"></button>
+                <button onclick="changeTheme('#3b82f6')" class="w-full aspect-square bg-blue-500 rounded-xl"></button>
+                <button onclick="changeTheme('#10b981')" class="w-full aspect-square bg-emerald-500 rounded-xl"></button>
             </div>
-            <h3 class="text-xl font-bold">Em Chamada</h3>
-            <p id="timer" class="text-orange-400 font-mono">00:00</p>
-        </div>
-
-        <div class="grid grid-cols-3 gap-6">
-            <button id="micBtn" onclick="toggleMic()" class="btn-action bg-slate-800 text-white"><i class="fas fa-microphone"></i></button>
-            <button onclick="endCall()" class="btn-action bg-red-600 text-white"><i class="fas fa-phone-slash"></i></button>
-            <button id="speakerBtn" onclick="toggleSpeaker()" class="btn-action bg-slate-800 text-white"><i class="fas fa-volume-up"></i></button>
-            <button id="videoBtn" onclick="toggleVideo()" class="btn-action bg-slate-800 text-white"><i class="fas fa-video"></i></button>
-            <button onclick="muteRemote()" id="silenceBtn" class="btn-action bg-slate-800 text-white"><i class="fas fa-bell"></i></button>
-            <button onclick="toggleSettings()" class="btn-action bg-slate-800 text-white"><i class="fas fa-cog"></i></button>
+            <button onclick="toggleSettings()" class="w-full p-3 bg-zinc-800 rounded-xl font-bold">Voltar</button>
         </div>
     </div>
+</div>
 
-    <div id="settings" class="fixed inset-0 bg-black/90 z-[200] hidden flex flex-col items-center justify-center p-6 text-center">
-        <h3 class="text-2xl font-bold mb-6">Ajustes</h3>
-        <div class="flex gap-4 mb-8">
-            <div onclick="changeColor('#f97316')" class="w-12 h-12 rounded-full bg-orange-500 border-2 border-white"></div>
-            <div onclick="changeColor('#3b82f6')" class="w-12 h-12 rounded-full bg-blue-500"></div>
-            <div onclick="changeColor('#10b981')" class="w-12 h-12 rounded-full bg-emerald-500"></div>
-            <div onclick="changeColor('#a855f7')" class="w-12 h-12 rounded-full bg-purple-500"></div>
-        </div>
-        <button onclick="toggleSettings()" class="px-8 py-3 bg-slate-700 rounded-xl">Fechar</button>
-    </div>
+<audio id="remoteAudio" autoplay></audio>
 
-    <footer class="text-center mt-5 text-gray-500 text-sm">
-        Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="text-blue-400 hover:text-blue-300 font-semibold transition duration-200">@085_Teuzinnn</a>
-    </footer>
+<script>
+    let peer, conn, localStream, currentCall;
+    let isMuted = false;
 
-    <script>
-        let peer = new Peer();
-        let localStream;
-        let activeCall;
-        let seconds = 0;
-        let timerId;
+    function startApp(isHost) {
+        const room = document.getElementById('roomName').value.trim();
+        if (!room) return alert("Digite o nome da sala!");
 
-        peer.on('open', id => document.getElementById('my-id').innerText = id);
+        const cleanId = "P2P_VOICE_" + room.toLowerCase().replace(/[^a-z0-9]/g, '');
+        document.getElementById('display-room').innerText = room;
 
-        async function initMedia(video = false) {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: video });
-                return true;
-            } catch (e) {
-                alert("Erro ao acessar mídia: " + e);
-                return false;
-            }
-        }
+        peer = isHost ? new Peer(cleanId) : new Peer();
 
-        peer.on('call', async call => {
-            if (confirm("Recebendo Call... Aceitar?")) {
-                await initMedia();
-                call.answer(localStream);
-                setupCall(call);
+        peer.on('open', (id) => {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('call-screen').style.display = 'flex';
+            
+            if (!isHost) {
+                initCall(cleanId);
             }
         });
 
-        async function startCall() {
-            const destId = document.getElementById('remote-id').value;
-            if (!destId) return alert("Insira o ID");
-            const ready = await initMedia();
-            if (ready) {
-                const call = peer.call(destId, localStream);
-                setupCall(call);
-            }
-        }
+        peer.on('call', (call) => {
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                localStream = stream;
+                call.answer(stream);
+                setupCallHandlers(call);
+            }).catch(() => alert("Erro ao acessar microfone."));
+        });
 
-        function setupCall(call) {
-            activeCall = call;
-            document.getElementById('callModal').style.display = 'flex';
-            startTimer();
-            
-            call.on('stream', remoteStream => {
-                const video = document.getElementById('remoteVideo');
-                video.srcObject = remoteStream;
-                video.play();
-            });
+        peer.on('error', (err) => {
+            if(err.type === 'unavailable-id') alert("Esta sala já está ocupada!");
+            else alert("Erro na conexão P2P.");
+            location.reload();
+        });
+    }
 
-            call.on('close', () => endCall());
-        }
-
-        function toggleMic() {
-            const track = localStream.getAudioTracks()[0];
-            track.enabled = !track.enabled;
-            document.getElementById('micBtn').classList.toggle('bg-red-500', !track.enabled);
-            document.getElementById('micBtn').innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>';
-        }
-
-        function toggleSpeaker() {
-            const audio = document.getElementById('remoteVideo');
-            audio.muted = !audio.muted;
-            document.getElementById('speakerBtn').classList.toggle('bg-blue-500', audio.muted);
-        }
-
-        async function toggleVideo() {
-            const isVideo = localStream.getVideoTracks().length > 0;
-            localStream.getTracks().forEach(t => t.stop());
-            await initMedia(!isVideo);
-            
-            if (activeCall) {
-                const call = peer.call(activeCall.peer, localStream);
-                setupCall(call);
-            }
-            
-            document.getElementById('video-container').style.display = !isVideo ? 'block' : 'none';
-            document.getElementById('callAvatar').style.display = !isVideo ? 'none' : 'flex';
-        }
-
-        function muteRemote() {
-            const v = document.getElementById('remoteVideo');
-            v.volume = v.volume === 0 ? 1 : 0;
-            document.getElementById('silenceBtn').classList.toggle('bg-yellow-600', v.volume === 0);
-        }
-
-        function endCall() {
-            if (activeCall) activeCall.close();
+    async function initCall(targetId) {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const call = peer.call(targetId, localStream);
+            setupCallHandlers(call);
+        } catch (e) {
+            alert("Microfone necessário para ligar.");
             location.reload();
         }
+    }
 
-        function startTimer() {
-            timerId = setInterval(() => {
-                seconds++;
-                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-                const s = (seconds % 60).toString().padStart(2, '0');
-                document.getElementById('timer').innerText = `${m}:${s}`;
-            }, 1000);
-        }
+    function setupCallHandlers(call) {
+        currentCall = call;
+        const statusLabel = document.getElementById('call-status-label');
+        const avatar = document.getElementById('avatar-container');
+        const micIcon = document.getElementById('mic-icon');
 
-        function copyId() {
-            const id = document.getElementById('my-id').innerText;
-            navigator.clipboard.writeText(id);
-            alert("ID Copiado!");
-        }
+        statusLabel.innerText = "Em Chamada";
+        statusLabel.classList.add('animate-pulse');
+        avatar.classList.add('calling-animation');
+        avatar.classList.replace('bg-zinc-900', 'bg-orange-500/10');
+        micIcon.classList.replace('text-zinc-700', 'text-orange-500');
 
-        function toggleSettings() {
-            const s = document.getElementById('settings');
-            s.classList.toggle('hidden');
-        }
+        call.on('stream', (remoteStream) => {
+            document.getElementById('remoteAudio').srcObject = remoteStream;
+        });
 
-        function changeColor(c) {
-            document.querySelectorAll('.bg-custom').forEach(el => el.style.backgroundColor = c);
-            document.getElementById('callAvatar').style.backgroundColor = c;
-            document.getElementById('my-id').style.color = c;
-        }
-    </script>
+        call.on('close', () => location.reload());
+    }
+
+    function toggleMute() {
+        if (!localStream) return;
+        isMuted = !isMuted;
+        localStream.getAudioTracks()[0].enabled = !isMuted;
+        const btn = document.getElementById('mute-btn');
+        btn.innerHTML = isMuted ? '<i class="fas fa-microphone-slash text-red-500"></i>' : '<i class="fas fa-microphone"></i>';
+        btn.classList.toggle('bg-red-500/10', isMuted);
+    }
+
+    function toggleSettings() {
+        document.getElementById('settings-modal').classList.toggle('active');
+    }
+
+    function changeTheme(color) {
+        document.documentElement.style.setProperty('--orange', color);
+        const elements = document.querySelectorAll('.text-orange-500, .bg-orange-500, .border-orange-500');
+        elements.forEach(el => {
+            if(el.classList.contains('text-orange-500')) el.style.color = color;
+            if(el.classList.contains('bg-orange-500')) el.style.backgroundColor = color;
+            if(el.classList.contains('border-orange-500')) el.style.borderColor = color;
+        });
+        toggleSettings();
+    }
+</script>
 </body>
 </html>
