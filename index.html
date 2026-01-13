@@ -28,7 +28,7 @@
             background-color: #09090b; 
             display: flex; 
             flex-direction: column; 
-            position: relative;
+            position: relative; 
             overflow: hidden;
             box-shadow: 0 0 40px rgba(0,0,0,0.5);
         }
@@ -41,18 +41,6 @@
         .btn-control { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-on { background-color: var(--main-color); color: #fff; }
         .btn-off { background-color: #27272a; color: #71717a; }
-        .pulse-ring {
-            position: absolute;
-            width: 160px; height: 160px;
-            border-radius: 50%;
-            border: 2px solid var(--main-color);
-            animation: ring-anim 2s infinite;
-            opacity: 0;
-        }
-        @keyframes ring-anim {
-            0% { transform: scale(0.6); opacity: 0.8; }
-            100% { transform: scale(1.6); opacity: 0; }
-        }
         .wave-bar { width: 4px; height: 10px; background: var(--main-color); border-radius: 10px; transition: height 0.15s; }
         #config-modal { background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; }
         #config-modal.active { display: flex; }
@@ -96,12 +84,8 @@
         </div>
 
         <div class="relative flex items-center justify-center w-full">
-            <div id="call-visuals" class="hidden">
-                <div class="pulse-ring"></div>
-                <div class="pulse-ring" style="animation-delay: 0.5s"></div>
-            </div>
             <div class="w-36 h-36 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center z-10 shadow-2xl overflow-hidden">
-                <i class="fas fa-user-astronaut text-5xl text-zinc-800" id="avatar-icon"></i>
+                <span id="avatar-initial" class="text-6xl font-black text-zinc-700 transition-colors uppercase">?</span>
             </div>
         </div>
 
@@ -169,28 +153,57 @@
             document.getElementById('call-screen').style.display = 'flex';
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                if (!isHost) handleCall(peer.call(roomId, localStream, { metadata: { name: u } }));
+                if (!isHost) {
+                    const call = peer.call(roomId, localStream, { metadata: { name: u } });
+                    handleCall(call);
+                }
             } catch (e) { alert("Microfone negado."); location.reload(); }
         });
 
-        peer.on('call', c => { c.answer(localStream); handleCall(c); });
-        peer.on('error', e => { if(e.type === 'unavailable-id') alert("Sala ocupada!"); location.reload(); });
+        peer.on('call', c => { 
+            c.answer(localStream); 
+            handleCall(c); 
+        });
+
+        peer.on('error', e => { 
+            if(e.type === 'unavailable-id') alert("Sala ocupada!"); 
+            location.reload(); 
+        });
     }
 
     function handleCall(call) {
         currentCall = call;
         const check = setInterval(() => { if(call && !call.open) { clearInterval(check); endCall(); } }, 1000);
 
+        if (call.peerConnection) {
+            const dataConn = peer.connect(call.peer);
+            dataConn.on('open', () => {
+                dataConn.send({ name: localStorage.getItem('p2p_name') });
+            });
+        }
+
+        peer.on('connection', conn => {
+            conn.on('data', data => {
+                if(data.name) updateRemoteUI(data.name);
+            });
+        });
+
         call.on('stream', s => {
             document.getElementById('remoteAudio').srcObject = s;
             document.getElementById('status-label').innerText = "Conectado";
-            document.getElementById('display-remote-name').innerText = call.metadata?.name || "Parceiro";
-            document.getElementById('call-visuals').classList.remove('hidden');
-            document.getElementById('avatar-icon').classList.add('theme-text');
+            if (call.metadata && call.metadata.name) updateRemoteUI(call.metadata.name);
             startTimer();
             animateWaves();
         });
         call.on('close', endCall);
+    }
+
+    function updateRemoteUI(name) {
+        document.getElementById('display-remote-name').innerText = name;
+        const initial = name.charAt(0).toUpperCase();
+        const avatarInitial = document.getElementById('avatar-initial');
+        avatarInitial.innerText = initial;
+        avatarInitial.classList.add('theme-text');
     }
 
     function startTimer() {
