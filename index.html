@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Call P2P Pro - Made By: @085_Teuzinnn</title>
+    <title>Call P2P - Made By: @085_Teuzinnn</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -12,7 +12,7 @@
         body { 
             background-color: #000; 
             color: #fff; 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            font-family: system-ui, -apple-system, sans-serif; 
             height: 100dvh; 
             margin: 0; 
             display: flex; 
@@ -28,124 +28,71 @@
             flex-direction: column; 
             position: relative;
         }
-        .glass { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .btn-active { background-color: var(--orange) !important; color: white !important; }
+        .btn-inactive { background-color: #27272a !important; color: #71717a !important; }
         
-        /* Melhoria: Animação de fundo mais fluida */
-        .pulse-bg {
-            position: absolute;
-            width: 250px;
-            height: 250px;
-            background: var(--orange);
-            filter: blur(100px);
-            opacity: 0.1;
-            border-radius: 50%;
-            animation: pulse 6s infinite ease-in-out;
-            pointer-events: none;
-        }
-        @keyframes pulse { 0%, 100% { transform: scale(1) translate(0,0); opacity: 0.1; } 50% { transform: scale(1.4) translate(20px, -20px); opacity: 0.2; } }
-
-        /* Melhoria: Animação de conexão ativa */
-        .calling-animation { animation: ripple 2s infinite cubic-bezier(0.4, 0, 0.6, 1); }
-        @keyframes ripple {
-            0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
-            70% { box-shadow: 0 0 0 60px rgba(249, 115, 22, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+        .pulse-animation { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); }
+            80%, 100% { opacity: 0; }
         }
 
-        #visualizer { width: 100%; height: 60px; }
-        .modal { display: none; z-index: 100; }
-        .modal.active { display: flex; }
-        
-        input::placeholder { color: #52525b; }
+        .wave-container { display: flex; align-items: center; justify-content: center; gap: 3px; height: 30px; }
+        .wave-bar { width: 3px; height: 5px; background: var(--orange); border-radius: 10px; transition: height 0.1s; }
     </style>
 </head>
 <body>
 
 <div id="app-container">
-    <div id="lobby" class="flex-1 flex flex-col justify-center p-8 text-center transition-all duration-500">
-        <div class="mb-10">
-            <div class="inline-block p-3 bg-orange-500/10 rounded-2xl mb-4">
-                <i class="fas fa-shield-halved text-orange-500 text-2xl"></i>
-            </div>
-            <h1 class="text-4xl font-black text-orange-500 mb-2 tracking-tight">Call P2P</h1>
-            <h2 class="text-zinc-500 text-sm font-medium">Segurança ponta-a-ponta via WebRTC</h2>
-        </div>
-
+    <div id="lobby" class="flex-1 flex flex-col justify-center p-8 text-center">
+        <h1 class="text-4xl font-black text-orange-500 mb-2">Call P2P</h1>
+        <h2 class="text-zinc-500 text-sm mb-10 font-medium">Conecte-se instantaneamente</h2>
+        
         <div class="space-y-4">
-            <div class="relative">
-                <input type="text" id="roomName" placeholder="NOME DA SALA" 
-                    class="w-full p-5 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none focus:border-orange-500 transition-all text-center font-bold tracking-widest uppercase text-orange-500">
-            </div>
+            <input type="text" id="userName" placeholder="Seu Nome" class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none focus:border-orange-500 transition-all">
+            <input type="text" id="roomName" placeholder="Nome da Sala" class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none focus:border-orange-500 transition-all uppercase font-bold tracking-widest">
             
-            <div class="flex gap-3">
-                <button onclick="startApp(true)" class="flex-1 bg-orange-500 p-5 rounded-2xl font-bold active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20">
-                    <i class="fas fa-plus"></i> Criar
-                </button>
-                <button onclick="startApp(false)" class="flex-1 border-2 border-orange-500 text-orange-500 p-5 rounded-2xl font-bold active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <i class="fas fa-sign-in-alt"></i> Entrar
-                </button>
+            <div class="flex gap-3 pt-4">
+                <button onclick="initCall(true)" class="flex-1 bg-orange-500 p-4 rounded-2xl font-bold active:scale-95 transition-transform">Ligar</button>
+                <button onclick="initCall(false)" class="flex-1 border border-orange-500 text-orange-500 p-4 rounded-2xl font-bold active:scale-95 transition-transform">Entrar</button>
             </div>
         </div>
 
-        <div class="mt-12 flex justify-center gap-6">
-            <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white transition-colors text-xl">
-                <i class="fas fa-cog"></i>
-            </button>
-            <button onclick="alert('Conexão P2P Direta: Seus dados não passam por servidores.')" class="text-zinc-500 hover:text-white transition-colors text-xl">
-                <i class="fas fa-info-circle"></i>
-            </button>
-        </div>
-
-        <footer class="text-center mt-auto pt-10 text-gray-500 text-[10px] uppercase tracking-widest">
-            Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="text-blue-400 font-bold">@085_Teuzinnn</a>
+        <footer class="text-center mt-12 text-gray-500 text-xs">
+            Made By: <a href="https://instagram.com/085_Teuzinnn" target="_blank" class="text-blue-400 hover:text-blue-300 font-semibold transition duration-200">@085_Teuzinnn</a>
         </footer>
     </div>
 
-    <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-12 px-8 relative overflow-hidden">
-        <div class="pulse-bg"></div>
-        
-        <div class="text-center z-10">
-            <div id="call-timer" class="text-zinc-500 font-mono text-sm mb-2">00:00</div>
-            <div id="call-status-label" class="text-orange-500 font-bold tracking-[0.3em] text-[10px] uppercase mb-1">Aguardando...</div>
-            <h3 id="display-room" class="text-3xl font-black uppercase tracking-tighter">SALA</h3>
+    <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-6">
+        <div class="text-center">
+            <p id="status-text" class="text-orange-500 text-xs font-bold tracking-widest uppercase mb-2">Aguardando...</p>
+            <h3 id="remote-display-name" class="text-2xl font-black">---</h3>
+            <div id="timer" class="text-zinc-500 font-mono text-sm mt-1">00:00</div>
         </div>
 
-        <div class="w-full z-10 flex flex-col items-center">
-            <canvas id="visualizer"></canvas>
-            <div id="avatar-container" class="w-44 h-44 bg-zinc-900 rounded-full flex items-center justify-center border-4 border-zinc-800 shadow-2xl relative mt-4">
-                <i class="fas fa-user text-6xl text-zinc-800" id="user-icon"></i>
+        <div class="relative flex items-center justify-center">
+            <div id="pulse" class="absolute w-40 h-40 rounded-full border-2 border-orange-500/30 hidden pulse-animation"></div>
+            <div class="w-32 h-32 bg-zinc-900 rounded-full border-4 border-zinc-800 flex items-center justify-center overflow-hidden">
+                <i class="fas fa-user text-5xl text-zinc-700"></i>
             </div>
         </div>
 
-        <div class="w-full space-y-8 z-10">
-            <div class="flex justify-around items-center">
-                <button id="mute-btn" onclick="toggleMute()" class="w-16 h-16 rounded-full glass flex items-center justify-center text-xl active:scale-90 transition-all border border-white/10">
-                    <i class="fas fa-microphone"></i>
-                </button>
-                
-                <button onclick="endCall()" class="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-2xl shadow-xl shadow-red-900/40 active:scale-90 transition-all">
-                    <i class="fas fa-phone-slash"></i>
-                </button>
-
-                <button id="speaker-btn" onclick="toggleSpeaker()" class="w-16 h-16 rounded-full glass flex items-center justify-center text-xl active:scale-90 transition-all border border-white/10">
-                    <i class="fas fa-volume-up"></i>
-                </button>
-            </div>
+        <div class="wave-container" id="visualizer">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
         </div>
-    </div>
 
-    <div id="settings-modal" class="modal fixed inset-0 bg-black/95 items-center justify-center p-6">
-        <div class="glass w-full max-w-xs p-8 rounded-[2rem] text-center border-orange-500/20">
-            <h3 class="font-bold text-xl mb-6">Customizar Tema</h3>
-            <div class="grid grid-cols-3 gap-4 mb-10">
-                <button onclick="changeTheme('#f97316')" class="w-full aspect-square bg-orange-500 rounded-2xl shadow-lg shadow-orange-500/20"></button>
-                <button onclick="changeTheme('#3b82f6')" class="w-full aspect-square bg-blue-500 rounded-2xl"></button>
-                <button onclick="changeTheme('#a855f7')" class="w-full aspect-square bg-purple-500 rounded-2xl"></button>
-                <button onclick="changeTheme('#10b981')" class="w-full aspect-square bg-emerald-500 rounded-2xl"></button>
-                <button onclick="changeTheme('#ef4444')" class="w-full aspect-square bg-red-500 rounded-2xl"></button>
-                <button onclick="changeTheme('#facc15')" class="w-full aspect-square bg-yellow-400 rounded-2xl"></button>
-            </div>
-            <button onclick="toggleSettings()" class="w-full p-4 bg-zinc-800 rounded-2xl font-bold hover:bg-zinc-700 transition">FECHAR</button>
+        <div class="grid grid-cols-3 gap-6 w-full max-w-xs">
+            <button onclick="toggleMic()" id="btn-mic" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all shadow-lg">
+                <i id="icon-mic" class="fas fa-microphone"></i>
+            </button>
+            
+            <button onclick="endCall()" class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-xl active:scale-90 transition-all shadow-xl shadow-red-900/40">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+
+            <button onclick="toggleAudio()" id="btn-audio" class="w-16 h-16 rounded-full flex items-center justify-center text-xl btn-active transition-all shadow-lg">
+                <i id="icon-audio" class="fas fa-volume-up"></i>
+            </button>
         </div>
     </div>
 </div>
@@ -153,172 +100,117 @@
 <audio id="remoteAudio" autoplay></audio>
 
 <script>
-    let peer, localStream, currentCall, timerInterval;
-    let isMuted = false;
-    let startTime;
+    let peer, conn, currentCall, localStream;
+    let micEnabled = true;
+    let audioEnabled = true;
+    let timerInterval;
 
-    async function startApp(isHost) {
+    const remoteAudio = document.getElementById('remoteAudio');
+
+    async function initCall(isHost) {
+        const myName = document.getElementById('userName').value.trim();
         const room = document.getElementById('roomName').value.trim();
-        if (!room) return alert("Por favor, defina um nome para a sala.");
 
-        if (window.navigator.vibrate) window.navigator.vibrate(50);
+        if (!myName || !room) return alert("Preencha seu nome e a sala!");
 
-        const cleanId = "P2P_VOICE_PRO_" + room.toLowerCase().replace(/[^a-z0-9]/g, '');
-        document.getElementById('display-room').innerText = room;
+        const cleanRoomId = "P2P_CALL_" + room.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Inicializa Peer
+        peer = isHost ? new Peer(cleanRoomId) : new Peer();
 
-        peer = isHost ? new Peer(cleanId) : new Peer();
-
-        peer.on('open', (id) => {
-            document.getElementById('lobby').classList.add('opacity-0');
-            setTimeout(() => {
-                document.getElementById('lobby').style.display = 'none';
-                document.getElementById('call-screen').classList.remove('hidden');
-                if (!isHost) requestCall(cleanId);
-            }, 500);
-        });
-
-        peer.on('call', async (call) => {
+        peer.on('open', async (id) => {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('call-screen').style.display = 'flex';
+            
             try {
-                localStream = await getMedia();
-                call.answer(localStream);
-                setupCallHandlers(call);
-            } catch (e) {
-                alert("Erro ao acessar microfone. Verifique as permissões.");
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                if (!isHost) {
+                    const call = peer.call(cleanRoomId, localStream, { metadata: { name: myName } });
+                    handleCall(call);
+                }
+            } catch (err) {
+                alert("Erro ao acessar microfone!");
+                location.reload();
             }
         });
 
+        peer.on('call', (call) => {
+            call.answer(localStream);
+            handleCall(call);
+        });
+
         peer.on('error', (err) => {
-            if(err.type === 'unavailable-id') alert("Erro: Esta sala já está ativa. Escolha outro nome ou clique em Entrar.");
-            else alert("Erro de conexão: " + err.type);
+            if (err.type === 'unavailable-id') alert("Sala já ocupada! Tente outro nome.");
+            else alert("Erro na conexão P2P.");
             location.reload();
         });
     }
 
-    async function getMedia() {
-        return await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            } 
-        });
-    }
-
-    async function requestCall(targetId) {
-        try {
-            localStream = await getMedia();
-            const call = peer.call(targetId, localStream);
-            setupCallHandlers(call);
-        } catch (e) {
-            alert("Não foi possível iniciar a chamada sem microfone.");
-            location.reload();
-        }
-    }
-
-    function setupCallHandlers(call) {
+    function handleCall(call) {
         currentCall = call;
-        const statusLabel = document.getElementById('call-status-label');
-        const avatar = document.getElementById('avatar-container');
-        const userIcon = document.getElementById('user-icon');
+        document.getElementById('status-text').innerText = "Conectado";
+        document.getElementById('pulse').classList.remove('hidden');
+        startTimer();
 
-        call.on('stream', (remoteStream) => {
-            document.getElementById('remoteAudio').srcObject = remoteStream;
-            startTimer();
-            initVisualizer(remoteStream);
-            
-            statusLabel.innerText = "Em Chamada Segura";
-            avatar.classList.add('calling-animation');
-            avatar.style.borderColor = 'var(--orange)';
-            userIcon.classList.replace('text-zinc-800', 'text-orange-500');
+        call.on('stream', (stream) => {
+            remoteAudio.srcObject = stream;
+            document.getElementById('remote-display-name').innerText = call.metadata?.name || "Convidado";
+            animateWaves();
         });
 
         call.on('close', () => endCall());
-        peer.on('disconnected', () => peer.reconnect());
     }
 
-    function startTimer() {
-        if (timerInterval) return;
-        startTime = Date.now();
-        timerInterval = setInterval(() => {
-            const delta = Date.now() - startTime;
-            const m = Math.floor(delta / 60000);
-            const s = Math.floor((delta % 60000) / 1000);
-            document.getElementById('call-timer').innerText = 
-                `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-        }, 1000);
+    // FUNÇÕES DE CONTROLE (ON/OFF)
+    function toggleMic() {
+        micEnabled = !micEnabled;
+        localStream.getAudioTracks()[0].enabled = micEnabled;
+        
+        const btn = document.getElementById('btn-mic');
+        const icon = document.getElementById('icon-mic');
+        
+        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all shadow-lg ${micEnabled ? 'btn-active' : 'btn-inactive'}`;
+        icon.className = micEnabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+    }
+
+    function toggleAudio() {
+        audioEnabled = !audioEnabled;
+        remoteAudio.muted = !audioEnabled;
+        
+        const btn = document.getElementById('btn-audio');
+        const icon = document.getElementById('icon-audio');
+        
+        btn.className = `w-16 h-16 rounded-full flex items-center justify-center text-xl transition-all shadow-lg ${audioEnabled ? 'btn-active' : 'btn-inactive'}`;
+        icon.className = audioEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
     }
 
     function endCall() {
-        if (window.navigator.vibrate) window.navigator.vibrate([50, 50]);
         if (currentCall) currentCall.close();
         if (localStream) localStream.getTracks().forEach(t => t.stop());
         location.reload();
     }
 
-    function toggleMute() {
-        isMuted = !isMuted;
-        localStream.getAudioTracks()[0].enabled = !isMuted;
-        const btn = document.getElementById('mute-btn');
-        btn.innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
-        btn.classList.toggle('text-red-500', isMuted);
-        btn.classList.toggle('bg-red-500/10', isMuted);
+    // UTILITÁRIOS
+    function startTimer() {
+        let sec = 0;
+        timerInterval = setInterval(() => {
+            sec++;
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            document.getElementById('timer').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+        }, 1000);
     }
 
-    function toggleSpeaker() {
-        const audio = document.getElementById('remoteAudio');
-        const btn = document.getElementById('speaker-btn');
-        if (audio.sinkId !== undefined) {
-            // Recurso avançado para navegadores que suportam setSinkId
-            alert("Alternando saída de áudio...");
-        } else {
-            alert("A troca de saída depende das configurações do seu sistema/dispositivo.");
-        }
+    function animateWaves() {
+        const bars = document.querySelectorAll('.wave-bar');
+        setInterval(() => {
+            bars.forEach(bar => {
+                const h = Math.random() * 25 + 5;
+                bar.style.height = h + 'px';
+            });
+        }, 100);
     }
-
-    function initVisualizer(stream) {
-        const canvas = document.getElementById('visualizer');
-        const ctx = canvas.getContext('2d');
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaStreamSource(stream);
-        const analyzer = audioCtx.createAnalyser();
-        analyzer.fftSize = 64;
-        source.connect(analyzer);
-
-        const bufferLength = analyzer.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        function draw() {
-            requestAnimationFrame(draw);
-            analyzer.getByteFrequencyData(dataArray);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const barWidth = (canvas.width / bufferLength) * 2.5;
-            let x = 0;
-
-            for(let i = 0; i < bufferLength; i++) {
-                const barHeight = dataArray[i] / 5;
-                ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--orange');
-                ctx.fillRect(x, canvas.height/2 - barHeight/2, barWidth, barHeight);
-                x += barWidth + 2;
-            }
-        }
-        draw();
-    }
-
-    function toggleSettings() {
-        document.getElementById('settings-modal').classList.toggle('active');
-    }
-
-    function changeTheme(color) {
-        document.documentElement.style.setProperty('--orange', color);
-        toggleSettings();
-    }
-
-    // Melhoria: Prevenir suspensão de áudio em mobile
-    document.addEventListener('touchstart', () => {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }, { once: true });
 </script>
 </body>
 </html>
