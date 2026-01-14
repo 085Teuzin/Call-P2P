@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Call P2P - Made By: @085_Teuzinnn</title>
+    <title>Call P2P Pro - @085_Teuzinnn</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -22,16 +22,21 @@
         .btn-on { background-color: var(--main-color); color: #fff; }
         .btn-off { background-color: #27272a; color: #71717a; }
         .wave-bar { width: 6px; background: var(--main-color); border-radius: 10px; transition: height 0.05s linear; min-height: 4px; }
-        #config-modal, #share-modal { background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); display: none; z-index: 100; position: absolute; inset: 0; align-items: center; justify-content: center; padding: 20px; }
-        #config-modal.active, #share-modal.active { display: flex; }
+        #config-modal, #share-modal, #chat-modal { background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); display: none; z-index: 100; position: absolute; inset: 0; align-items: center; justify-content: center; padding: 20px; }
+        .active { display: flex !important; }
         .pulse { animation: pulse-animation 2s infinite; }
         @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0px rgba(249, 115, 22, 0.4); } 100% { box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); } }
+        #chat-messages { height: 300px; overflow-y: auto; scrollbar-width: none; }
     </style>
 </head>
 <body>
 
 <div id="app-container">
     <div class="absolute top-6 right-6 z-50 flex gap-4">
+        <button id="chat-trigger" onclick="toggleModal('chat-modal')" class="hidden text-zinc-500 hover:text-white transition-all text-xl relative">
+            <i class="fas fa-comment-dots"></i>
+            <span id="chat-dot" class="hidden absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
         <button onclick="openShare()" class="text-zinc-500 hover:text-white transition-all text-xl"><i class="fas fa-share-nodes"></i></button>
         <button onclick="toggleModal('config-modal')" class="text-zinc-500 hover:text-white transition-all text-xl"><i class="fas fa-cog"></i></button>
     </div>
@@ -47,14 +52,14 @@
             <input type="text" id="roomName" placeholder="NOME DA SALA" class="w-full p-5 rounded-3xl bg-zinc-900 border border-zinc-800 focus:theme-border transition-all text-center font-bold tracking-widest uppercase theme-text">
             
             <div class="grid grid-cols-2 gap-4 pt-4">
-                <button onclick="initCall(true)" class="theme-bg p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Criar Sala</button>
-                <button onclick="initCall(false)" class="border-2 theme-border theme-text p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Entrar</button>
+                <button id="btn-create" onclick="initCall(true)" class="theme-bg p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Criar Sala</button>
+                <button id="btn-join" onclick="initCall(false)" class="border-2 theme-border theme-text p-5 rounded-3xl font-black text-sm uppercase active:scale-95 transition-all">Entrar</button>
             </div>
         </div>
 
         <footer class="text-center pb-4">
             <p class="text-[10px] text-zinc-700 font-bold uppercase tracking-widest">
-                v2.0 PRO • By: <a href="#" class="theme-text">@085_Teuzinnn</a>
+                v2.5 PRO • By: <a href="#" class="theme-text">@085_Teuzinnn</a>
             </p>
         </footer>
     </div>
@@ -62,10 +67,10 @@
     <div id="call-screen" class="hidden flex-1 flex flex-col items-center justify-between py-16 px-8 relative">
         <div class="text-center space-y-2">
             <div id="status-label" class="inline-block px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[10px] font-black theme-text uppercase tracking-widest">Conectando...</div>
-            <h3 id="display-remote-name" class="text-3xl font-black tracking-tight">---</h3>
+            <h3 id="display-remote-name" class="text-3xl font-black tracking-tight">Aguardando...</h3>
             <div class="flex items-center justify-center gap-2">
                 <p id="call-timer" class="font-mono text-zinc-500 text-sm">00:00</p>
-                <span id="ping-disp" class="text-[10px] text-zinc-600 font-bold"></span>
+                <span id="ping-disp" class="text-[10px] text-green-500 font-bold"></span>
             </div>
         </div>
 
@@ -109,9 +114,21 @@
     <div id="share-modal">
         <div class="bg-white p-8 rounded-[40px] flex flex-col items-center max-w-[320px] w-full">
             <div id="qrcode" class="mb-6"></div>
-            <p class="text-black text-[10px] font-black uppercase mb-4 tracking-widest">Aponte a câmera para convidar</p>
-            <button onclick="copyInvite()" class="w-full py-4 bg-zinc-900 text-white rounded-2xl text-xs font-bold">COPIAR LINK</button>
+            <p class="text-black text-[10px] font-black uppercase mb-4 tracking-widest text-center">Aponte a câmera para convidar</p>
+            <button onclick="copyInvite()" class="w-full py-4 bg-zinc-900 text-white rounded-2xl text-xs font-bold uppercase">Copiar Link</button>
             <button onclick="toggleModal('share-modal')" class="mt-4 text-zinc-400 text-[10px] font-bold uppercase">Voltar</button>
+        </div>
+    </div>
+
+    <div id="chat-modal">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-[350px] rounded-[40px] p-6 flex flex-col shadow-2xl">
+            <h4 class="text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4">Chat Seguro</h4>
+            <div id="chat-messages" class="space-y-3 mb-4 p-2"></div>
+            <div class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Mensagem..." class="flex-1 bg-zinc-800 border-none rounded-2xl p-4 text-sm">
+                <button onclick="sendChatMessage()" class="theme-bg w-12 h-12 rounded-2xl flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <button onclick="toggleModal('chat-modal')" class="mt-4 text-zinc-500 text-[10px] font-bold uppercase">Fechar Chat</button>
         </div>
     </div>
 </div>
@@ -119,14 +136,20 @@
 <audio id="remoteAudio" autoplay></audio>
 
 <script>
-    let peer, localStream, currentCall, timerInterval, audioCtx, analyser, dataArray;
+    let peer, localStream, currentCall, dataConn, timerInterval;
+    let audioCtx, analyser, dataArray;
     let micOn = true, speakerOn = true;
+    const peerConfig = {
+        config: { 'iceServers': [
+            { 'urls': 'stun:stun.l.google.com:19302' },
+            { 'urls': 'stun:stun1.l.google.com:19302' }
+        ]}
+    };
 
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const roomParam = urlParams.get('room');
         if(roomParam) document.getElementById('roomName').value = roomParam;
-        
         document.getElementById('userName').value = localStorage.getItem('p2p_name') || '';
         if(!roomParam) document.getElementById('roomName').value = localStorage.getItem('p2p_room') || '';
         updateTheme(localStorage.getItem('p2p_theme') || '#f97316', false);
@@ -135,27 +158,27 @@
     async function initCall(isHost) {
         const u = document.getElementById('userName').value.trim();
         const r = document.getElementById('roomName').value.trim();
-        if (!u || !r) return alert("Identifique-se primeiro.");
+        if (!u || !r) return alert("Preencha seu nome e a sala.");
 
         localStorage.setItem('p2p_name', u);
         localStorage.setItem('p2p_room', r);
-
-        const roomId = "P2P_PRO_VOICE_" + r.toLowerCase().replace(/[^a-z0-9]/g, '');
         
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ 
                 audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
             });
-            setupVisualizer(localStream);
-        } catch (e) { return alert("Erro: Microfone é obrigatório."); }
+        } catch (e) { return alert("Acesso ao microfone negado."); }
 
-        peer = isHost ? new Peer(roomId) : new Peer();
+        const roomId = "P2P_V2_" + r.toLowerCase().replace(/[^a-z0-9]/g, '');
+        peer = isHost ? new Peer(roomId, peerConfig) : new Peer(peerConfig);
 
         peer.on('open', (id) => {
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('call-screen').classList.remove('hidden');
+            document.getElementById('chat-trigger').classList.remove('hidden');
             if(!isHost) {
                 const call = peer.call(roomId, localStream, { metadata: { name: u } });
+                setupDataConnection(peer.connect(roomId));
                 handleCall(call);
             }
         });
@@ -165,9 +188,28 @@
             handleCall(c);
         });
 
+        peer.on('connection', setupDataConnection);
+
         peer.on('error', e => {
-            alert(e.type === 'unavailable-id' ? "Esta sala já tem um dono online." : "Erro de conexão.");
+            alert("Erro: " + e.type);
             location.reload();
+        });
+    }
+
+    function setupDataConnection(conn) {
+        dataConn = conn;
+        dataConn.on('open', () => {
+            dataConn.send({ type: 'info', name: localStorage.getItem('p2p_name') });
+            setInterval(() => dataConn.send({ type: 'ping', ts: Date.now() }), 3000);
+        });
+        dataConn.on('data', data => {
+            if(data.type === 'info') updateRemoteUI(data.name);
+            if(data.type === 'ping') dataConn.send({ type: 'pong', ts: data.ts });
+            if(data.type === 'pong') {
+                const rtt = Date.now() - data.ts;
+                document.getElementById('ping-disp').innerText = rtt + "ms";
+            }
+            if(data.type === 'chat') appendMessage(data.name, data.msg, 'remote');
         });
     }
 
@@ -176,27 +218,17 @@
         call.on('stream', s => {
             const audio = document.getElementById('remoteAudio');
             audio.srcObject = s;
+            setupVisualizer(s);
             document.getElementById('status-label').innerText = "Em Chamada";
             document.getElementById('status-label').classList.add('pulse');
             if (call.metadata?.name) updateRemoteUI(call.metadata.name);
             startTimer();
         });
-
-        const conn = peer.connect(call.peer);
-        conn.on('open', () => {
-            conn.send({ name: localStorage.getItem('p2p_name'), type: 'info' });
-        });
-
-        peer.on('connection', c => {
-            c.on('data', data => {
-                if(data.type === 'info') updateRemoteUI(data.name);
-            });
-        });
-
         call.on('close', endCall);
     }
 
     function setupVisualizer(stream) {
+        if(audioCtx) audioCtx.close();
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
         const source = audioCtx.createMediaStreamSource(stream);
@@ -207,6 +239,7 @@
     }
 
     function renderFrame() {
+        if(!analyser) return;
         requestAnimationFrame(renderFrame);
         analyser.getByteFrequencyData(dataArray);
         const bars = document.querySelectorAll('.wave-bar');
@@ -246,24 +279,51 @@
         document.getElementById('s-icon').className = speakerOn ? 'fas fa-volume-up' : 'fas fa-volume-mute';
     }
 
-    function endCall() { location.href = window.location.pathname; }
+    function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if(!msg || !dataConn) return;
+        dataConn.send({ type: 'chat', msg: msg, name: localStorage.getItem('p2p_name') });
+        appendMessage('Você', msg, 'local');
+        input.value = '';
+    }
 
-    function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
+    function appendMessage(name, msg, side) {
+        const container = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-2xl max-w-[80%] ${side === 'local' ? 'ml-auto theme-bg text-white' : 'mr-auto bg-zinc-800 text-zinc-300'}`;
+        div.innerHTML = `<p class="text-[9px] font-black uppercase opacity-50">${name}</p><p class="text-sm font-medium">${msg}</p>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+        if(side === 'remote' && !document.getElementById('chat-modal').classList.contains('active')) {
+            document.getElementById('chat-dot').classList.remove('hidden');
+        }
+    }
+
+    function endCall() {
+        if(localStream) localStream.getTracks().forEach(t => t.stop());
+        location.href = window.location.pathname;
+    }
+
+    function toggleModal(id) {
+        const m = document.getElementById(id);
+        m.classList.toggle('active');
+        if(id === 'chat-modal') document.getElementById('chat-dot').classList.add('hidden');
+    }
 
     function openShare() {
         const room = document.getElementById('roomName').value;
-        if(!room) return alert("Crie ou entre em uma sala primeiro.");
+        if(!room) return alert("Defina uma sala primeiro.");
         const url = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(room)}`;
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200 });
+        new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff" });
         toggleModal('share-modal');
     }
 
     function copyInvite() {
         const room = document.getElementById('roomName').value;
         const url = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(room)}`;
-        navigator.clipboard.writeText(url);
-        alert("Link copiado!");
+        navigator.clipboard.writeText(url).then(() => alert("Link copiado!"));
     }
 
     function updateTheme(color, close = true) {
@@ -273,11 +333,15 @@
     }
 
     function clearStorage() {
-        if(confirm("Deseja apagar todos os dados e resetar?")) {
+        if(confirm("Limpar todos os dados?")) {
             localStorage.clear();
             location.reload();
         }
     }
+
+    document.getElementById('chat-input').addEventListener('keypress', e => {
+        if(e.key === 'Enter') sendChatMessage();
+    });
 </script>
 </body>
 </html>
