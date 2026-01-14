@@ -138,7 +138,17 @@
 <script>
     let peer, localStream, currentCall, dataConn, timerInterval, audioCtx, analyser, dataArray;
     let micOn = true, speakerOn = true;
-    const peerConfig = { config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }, { 'urls': 'stun:stun1.l.google.com:19302' }] } };
+    const peerConfig = { 
+        config: { 
+            'iceServers': [
+                { 'urls': 'stun:stun.l.google.com:19302' }, 
+                { 'urls': 'stun:stun1.l.google.com:19302' },
+                { 'urls': 'stun:stun2.l.google.com:19302' },
+                { 'urls': 'stun:stun3.l.google.com:19302' },
+                { 'urls': 'stun:stun4.l.google.com:19302' }
+            ] 
+        } 
+    };
 
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -188,7 +198,11 @@
         });
 
         peer.on('connection', setupDataConnection);
-        peer.on('error', e => { alert("Erro: " + e.type); location.reload(); });
+        peer.on('error', e => { 
+            if(e.type === 'unavailable-id') alert("Essa sala já tem um Host.");
+            else alert("Erro: " + e.type); 
+            location.reload(); 
+        });
     }
 
     function setupDataConnection(conn) {
@@ -224,13 +238,15 @@
 
     function setupVisualizer(stream) {
         if(audioCtx) audioCtx.close();
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioCtx.createAnalyser();
-        const source = audioCtx.createMediaStreamSource(stream);
-        source.connect(analyser);
-        analyser.fftSize = 32;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        renderFrame();
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            const source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 32;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            renderFrame();
+        } catch(e) {}
     }
 
     function renderFrame() {
