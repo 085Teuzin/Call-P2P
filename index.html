@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Call P2P - Made By: @085_Teuzinnn</title>
+    <title>Call P2P - Made By @085_Teuzinnn</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -136,23 +136,24 @@
 <audio id="remoteAudio" autoplay></audio>
 
 <script>
-    let peer, localStream, currentCall, dataConn, timerInterval;
-    let audioCtx, analyser, dataArray;
+    let peer, localStream, currentCall, dataConn, timerInterval, audioCtx, analyser, dataArray;
     let micOn = true, speakerOn = true;
-    const peerConfig = {
-        config: { 'iceServers': [
-            { 'urls': 'stun:stun.l.google.com:19302' },
-            { 'urls': 'stun:stun1.l.google.com:19302' }
-        ]}
-    };
+    const peerConfig = { config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }, { 'urls': 'stun:stun1.l.google.com:19302' }] } };
 
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const roomParam = urlParams.get('room');
-        if(roomParam) document.getElementById('roomName').value = roomParam;
-        document.getElementById('userName').value = localStorage.getItem('p2p_name') || '';
-        if(!roomParam) document.getElementById('roomName').value = localStorage.getItem('p2p_room') || '';
-        updateTheme(localStorage.getItem('p2p_theme') || '#f97316', false);
+        const savedName = localStorage.getItem('p2p_name');
+        const savedRoom = localStorage.getItem('p2p_room');
+        const savedTheme = localStorage.getItem('p2p_theme');
+
+        if(savedName) document.getElementById('userName').value = savedName;
+        if(roomParam) {
+            document.getElementById('roomName').value = roomParam;
+        } else if(savedRoom) {
+            document.getElementById('roomName').value = savedRoom;
+        }
+        if(savedTheme) updateTheme(savedTheme, false);
     };
 
     async function initCall(isHost) {
@@ -164,9 +165,7 @@
         localStorage.setItem('p2p_room', r);
         
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
-            });
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
         } catch (e) { return alert("Acesso ao microfone negado."); }
 
         const roomId = "P2P_V2_" + r.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -189,18 +188,14 @@
         });
 
         peer.on('connection', setupDataConnection);
-
-        peer.on('error', e => {
-            alert("Erro: " + e.type);
-            location.reload();
-        });
+        peer.on('error', e => { alert("Erro: " + e.type); location.reload(); });
     }
 
     function setupDataConnection(conn) {
         dataConn = conn;
         dataConn.on('open', () => {
             dataConn.send({ type: 'info', name: localStorage.getItem('p2p_name') });
-            setInterval(() => dataConn.send({ type: 'ping', ts: Date.now() }), 3000);
+            setInterval(() => { if(dataConn.open) dataConn.send({ type: 'ping', ts: Date.now() }) }, 3000);
         });
         dataConn.on('data', data => {
             if(data.type === 'info') updateRemoteUI(data.name);
@@ -339,9 +334,7 @@
         }
     }
 
-    document.getElementById('chat-input').addEventListener('keypress', e => {
-        if(e.key === 'Enter') sendChatMessage();
-    });
+    document.getElementById('chat-input').addEventListener('keypress', e => { if(e.key === 'Enter') sendChatMessage(); });
 </script>
 </body>
 </html>
